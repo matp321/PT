@@ -32,7 +32,7 @@ struct Pozycja
 
 		   //region zmienne
 
-bool IsAreaSelected = false;
+bool IsAreaSelected = fals;e
 bool Is_drawing_active = false;
 bool Is_threshold_active = false;
 bool backprojMode = false;
