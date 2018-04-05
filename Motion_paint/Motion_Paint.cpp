@@ -9,7 +9,7 @@
 using namespace cv;
 using namespace std;
 
-//region Pozycja_struktura
+#pragma region Pozycja_struktura
 
 struct Pozycja
 {
@@ -28,11 +28,11 @@ struct Pozycja
 	}
 }pozycja;  ////Pozycja
 
-		   //endregion
+		   #pragma endregion 
 
-		   //region zmienne
+#pragma region zmienne
 
-bool IsAreaSelected = fals;e
+bool IsAreaSelected = false;
 bool Is_drawing_active = false;
 bool Is_threshold_active = false;
 bool backprojMode = false;
@@ -51,9 +51,9 @@ Point point_beginning;
 int BLUR = 2;
 int DILATE = 3;
 int ERODE = 2;
-//endregion
+#pragma endregion 
 
-//region Stale
+#pragma region Stale
 
 const int FRAME_WIDTH = 1280;
 const int FRAME_HEIGHT = 720;
@@ -61,8 +61,8 @@ const int MAX_NUM_OBJECTS = 50;
 const int MIN_OBJECT_AREA = 50 * 50;
 const int MAX_OBJECT_AREA = FRAME_HEIGHT*FRAME_WIDTH / 1.5;
 string window_name[] = { "Kamera", "HSV", "Threeshold","Card","Trackbars","Okno testowe","Histogram" };
-//endregion
-//region Stablizacja_promienia
+#pragma endregion 
+#pragma region Stablizacja_promienia
 
 int getRadius(int x, int y)
 {
@@ -95,9 +95,9 @@ bool Radiusmove(Pozycja actualposition, int movestabilize, int Radiustabilize)
 	}
 	return stabilize;
 }
-//endregion
+#pragma endregion 
 
-//region Funkcje rysowania
+#pragma region Funkcje rysowania
 
 void circledrawing(InputOutputArray img, Point center, int radius, const Scalar& color)
 {
@@ -121,9 +121,9 @@ void linedrawing(InputOutputArray img, Pozycja poczatkowa, Pozycja koncowa, cons
 		line(img, poczatkowa.point, koncowa.point, color, koncowa.r / diameterScale);
 	}
 }   ///Rysowani  //Rysowanie
-	//endregion
+	#pragma endregion 
 
-	//region Trackbars przsuwanie suwakiem
+#pragma region Trackbars przsuwanie suwakiem
 
 void on_trackbar(int, void*)
 {//This function gets called whenever a
@@ -141,9 +141,11 @@ void createTrackbars()
 	createTrackbar("Erode", window_name[4], &ERODE, 15, NULL);
 	createTrackbar("Line color", window_name[4], &lineColorValue, 4, NULL);
 }
-//endregion
+#pragma endregion 
 
 
+
+#pragma region Operacja morfologiczne
 void filterBlur(Mat &thresh) {
 	if (BLUR < 1)
 	{
@@ -178,6 +180,8 @@ void filter(Mat &thresh) {
 
 	filterErode(thresh);
 }
+
+#pragma endregion
 
 Scalar lineColor()
 {
@@ -242,33 +246,30 @@ static void mouseAction(int event, int x, int y, int flags, void*)
 		}
 		break;
 	}
-	//endregion
+	#pragma endregion 
 
 }
-
 int main() {
-
-	//region Inizjalizacja danych histogramu
-
-	//endregion
+	#pragma region Inizjalizacja danych histogramu
+	#pragma endregion 
 	cout << "test";
 	try
 	{
 		int histogramSize = 16;
 		float histogramZasieg[] = { 0, 180 };
 		const float *pHistogramZasieg = histogramZasieg;
-		//endregion
+		#pragma endregion 
 		vector<Mat> HSV_SPLIT;
 		Point2i pt(-1, -1);
-		VideoCapture capture = VideoCapture(0);
-		//region inicjalizacja trackbarow oraz towrzenie nowego okna do rysowania
+		VideoCapture capture = VideoCapture("Video.mp4");
+		#pragma region inicjalizacja trackbarow oraz towrzenie nowego okna do rysowania
 		createTrackbars();
-		//endregion
-		//region inicjalizacja wielkosc okna
+		#pragma endregion 
+		#pragma region inicjalizacja wielkosc okna
 		capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
 		capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
-		//endregion
-		//region inicjalizacja okien do wyswietlania
+		#pragma endregion 
+		#pragma region inicjalizacja okien do wyswietlania
 		///inicjalizacja okien
 		namedWindow(window_name[0], WINDOW_AUTOSIZE);//Oryginalny obraz z kamery
 													 //namedWindow(window_name[1], WINDOW_AUTOSIZE);//Obraz HSV
@@ -276,8 +277,8 @@ int main() {
 													 //namedWindow(window_name[3], WINDOW_AUTOSIZE);//Karta do rysowania  window_name[4] --Okno na trackbary
 													 //namedWindow(window_name[5], WINDOW_AUTOSIZE);//okno do testowania
 													 //namedWindow(window_name[6], WINDOW_AUTOSIZE);//okno do Histogram
-													 //endregion
-		setMouseCallback(window_name[0], mouseAction, (void *)&pt);///wlczenie akcji myszy														   //region Mat_variables_declaration
+													 #pragma endregion 
+		setMouseCallback(window_name[0], mouseAction, (void *)&pt);///wlczenie akcji myszy														   #pragma region Mat_variables_declaration
 		Rect  Rectangular_window_to_track;
 		Mat HSV;
 		//Mat hue;
@@ -289,12 +290,12 @@ int main() {
 		Mat frame;
 		capture >> frame;
 		Mat card(frame.rows, frame.cols, CV_8UC3, Scalar(255, 255, 255));
-		imshow(window_name[3], card);
+		//
+		//imshow(window_name[2], threshold);
 		while (true)///getting new frame
 		{
 			//cout<<"Is tracking object active value"<<Is_tracking_object_active<<"\n";
-
-			//region Rozdzielenia kanalow HSv i inicjalizacja przechwytywanie obrazu z kamery
+			#pragma region Rozdzielenia kanalow HSv i inicjalizacja przechwytywanie obrazu z kamery
 			capture >> frame;
 			flip(frame, frame, 1);
 			frame.copyTo(img);
@@ -305,19 +306,13 @@ int main() {
 			inRange(HSV_SPLIT[0], H_MIN, H_MAX, threshold);
 			int ch[] = { 0, 0 };
 			mixChannels(&HSV, 1, &HSV_SPLIT[0], 1, ch, 1);
-			filter(threshold);
-			imshow(window_name[2], threshold);
-			//endregion
+			filter(threshold);	
+			#pragma endregion 
 			if (Is_tracking_object_active)//exectued after selecting area with mouse
 			{
-				//region Threeshold initialization after selecting area with mouse
-
-
-
-				//endregion
-
-
-				//region Executed during selecting area with mouse
+				#pragma region Threeshold initialization after selecting area with mouse
+				#pragma endregion 
+				#pragma region Executed during selecting area with mouse
 				if (Is_tracking_object_active < 0)//exectued after selecting area with mouse
 				{
 					//cout << "Is_tracking_object_active value:" << Is_tracking_object_active;
@@ -351,7 +346,7 @@ int main() {
 					//cout << "After execurting everything" << "\n";
 					imshow(window_name[6], histogrampicture);
 				}
-				//endregion
+				#pragma endregion 
 
 
 				//cout << "Left mouse button has been released" << "\n";
@@ -385,31 +380,32 @@ int main() {
 
 			if (Is_threshold_active)
 			{
-				imshow(window_name[0], threshold);
+				imshow(window_name[2], threshold);
+				//destroyAllWindows();
 			}
+
 			else
 			{
 				if (Is_drawing_active == true)
 				{
 					//cout << "Is_drawing_active==" << Is_drawing_active << "\n";
 					//imshow(window_name[3],card);
-					addWeighted(img, 1, card, 0.9, 0.0, img);
+					//addWeighted(img, 1, card, 0.9, 0.0, img);
 					imshow(window_name[0], img);
 				}
 				else
 				{
 					//cout << "Is_drawing_active==false" << endl;
-					addWeighted(img, 1, card, 0.5, 0.0, img);
-					imshow(window_name[0], img);
+					//addWeighted(img, 1, card, 0.5, 0.0, img);
+				
 				}
 			}
-			//imshow(window_name[1], HSV);//Obraz HSV
 			//imshow(window_name[3], card);//Kartka do rysowaniak
-			//imshow(window_name[0], img); ///executed after selecting area with mouse ///executed after selecting area with mouse
+			imshow(window_name[0], img); ///executed after selecting area with mouse ///executed after selecting area with mouse
 
 
 
-			//region Interfejs wyboru akcji
+			#pragma region Interfejs wyboru akcji
 			char c = (char)waitKey(10);//Koniec proogramu esc
 			if (c == 27) {
 				break;
@@ -425,8 +421,9 @@ int main() {
 				card = temp;
 				break;
 			}
-			case 'r': //zatrzymuje rysowanie//przycisk dziala poprawnie
+			case 'r': //zatrzymuje rysowanie//przycisk dziala poprawnie`
 				if (Is_drawing_active == true) {
+					//imshow(window_name[3], card);
 					Is_drawing_active = false;
 					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
 				}
@@ -438,6 +435,7 @@ int main() {
 			case 'h': //ukrywa/pokazuje obraz threshold
 				if (Is_threshold_active == true) {
 					Is_threshold_active = false;
+					destroyWindow(window_name[2]);
 					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
 				}
 				else {
@@ -473,7 +471,7 @@ int main() {
 			default:
 				break;
 			}
-			//endregion
+			#pragma endregion 
 		}
 	}
 	catch (const exception& ex)
@@ -481,13 +479,8 @@ int main() {
 		cout << "Checking";
 		main();
 	}
-	
-	
 	//TODO
-
-
 	return 0;
-
 }
 
 
