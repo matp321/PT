@@ -32,6 +32,8 @@ struct Pozycja
 
 #pragma region zmienne
 
+
+bool Is_card_active = false;
 bool IsAreaSelected = false;
 bool Is_drawing_active = false;
 bool Is_threshold_active = false;
@@ -208,6 +210,7 @@ Scalar lineColor()
 	}
 }
 
+#pragma region mysz_implementacja
 static void mouseAction(int event, int x, int y, int flags, void*)
 {
 
@@ -218,10 +221,7 @@ static void mouseAction(int event, int x, int y, int flags, void*)
 		Rectangular_selected_area.y = MIN(y, point_beginning.y);
 		Rectangular_selected_area.width = std::abs(x - point_beginning.x);
 		Rectangular_selected_area.height = std::abs(y - point_beginning.y);
-
-		Rectangular_selected_area &= Rect(0, 0, img.cols, img.rows);//tworzenie prostokata
-
-																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.x << "\n";
+		Rectangular_selected_area &= Rect(0, 0, img.cols, img.rows);//tworzenie prostokata														//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.x << "\n";
 																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.y << "\n";
 																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.width << "\n";
 																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.height << "\n";
@@ -249,6 +249,7 @@ static void mouseAction(int event, int x, int y, int flags, void*)
 	#pragma endregion 
 
 }
+#pragma end region
 int main() {
 	#pragma region Inizjalizacja danych histogramu
 	#pragma endregion 
@@ -383,6 +384,11 @@ int main() {
 				imshow(window_name[2], threshold);
 				//destroyAllWindows();
 			}
+			if (Is_card_active)
+			{
+				imshow(window_name[3], card);
+				//destroyAllWindows();
+			}
 
 			else
 			{
@@ -396,15 +402,11 @@ int main() {
 				else
 				{
 					//cout << "Is_drawing_active==false" << endl;
-					//addWeighted(img, 1, card, 0.5, 0.0, img);
-				
+					//addWeighted(img, 1, card, 0.5, 0.0, img);	
 				}
 			}
 			//imshow(window_name[3], card);//Kartka do rysowaniak
 			imshow(window_name[0], img); ///executed after selecting area with mouse ///executed after selecting area with mouse
-
-
-
 			#pragma region Interfejs wyboru akcji
 			char c = (char)waitKey(10);//Koniec proogramu esc
 			if (c == 27) {
@@ -419,6 +421,20 @@ int main() {
 				//cout << "Card cleaning" << "\n";//
 				Mat temp(frame.rows, frame.cols, CV_8UC3, Scalar(255, 255, 255));
 				card = temp;
+				break;
+			}
+			case 'x': //usuwa kartke
+			{
+				if (Is_card_active == true) {
+					Is_card_active = false;
+					destroyWindow(window_name[3]);
+					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
+				}
+				else
+				{
+					Is_card_active = true;
+					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
+				}
 				break;
 			}
 			case 'r': //zatrzymuje rysowanie//przycisk dziala poprawnie`
@@ -438,7 +454,8 @@ int main() {
 					destroyWindow(window_name[2]);
 					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
 				}
-				else {
+				else
+				{
 					Is_threshold_active = true;
 					//cout << "Is_drawing_active value:" << +Is_drawing_active << "\n";
 				}
@@ -470,14 +487,16 @@ int main() {
 				break;
 			default:
 				break;
+
 			}
 			#pragma endregion 
 		}
+
 	}
 	catch (const exception& ex)
 	{
-		cout << "Checking";
-		main();
+		//cout << "Checking";
+		//main();
 	}
 	//TODO
 	return 0;
