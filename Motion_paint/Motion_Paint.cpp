@@ -32,7 +32,7 @@ struct Pozycja
 
 		   //region zmienne
 
-bool IsAreaSelected = fals;e
+bool IsAreaSelected = false;
 bool Is_drawing_active = false;
 bool Is_threshold_active = false;
 bool backprojMode = false;
@@ -203,7 +203,6 @@ Scalar lineColor()
 		break;
 	}
 }
-
 static void mouseAction(int event, int x, int y, int flags, void*)
 {
 
@@ -222,7 +221,6 @@ static void mouseAction(int event, int x, int y, int flags, void*)
 																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.width << "\n";
 																	//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.height << "\n";
 	}
-
 	switch (event)
 	{
 	case EVENT_LBUTTONDOWN:///zainicjowane po nacisnieciu przycisku myszki
@@ -311,12 +309,6 @@ int main() {
 			if (Is_tracking_object_active)//exectued after selecting area with mouse
 			{
 				//region Threeshold initialization after selecting area with mouse
-
-
-
-				//endregion
-
-
 				//region Executed during selecting area with mouse
 				if (Is_tracking_object_active < 0)//exectued after selecting area with mouse
 				{

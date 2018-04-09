@@ -5,6 +5,8 @@
 *
 
 !.*cpp
+!.MyForm.h
+!.Motion_Paint.cpp
 
 
 
