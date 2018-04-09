@@ -8,19 +8,21 @@
 cv::VideoCapture capture;
 cv::Mat mat_frame;
 cv::Mat mat_img;
-cv::Mat mat_rectangle;
+cv::Mat mat_roi;
 std::vector<cv::Mat> mat_img_split;
-#pragma region Trackbar parametry (Trackbar_*)
-int Trackbar_H_MIN = 0;
-int Trackbar_H_MAX = 0;
-double Trackbar_H_MIN_RANGE = 0;
-double Trackbar_H_MAX_RANGE = 93;
-int Trackbar_BLUR = 2;
-int Trackbar_DILATE = 3;
-int Trackbar_ERODE = 2;
-int Trackbar_Circle_diameter = 2;//zmienne
+#pragma region Trackbar parametry
+int H_MIN = 0;
+int H_MAX = 0;
+double h_min_range = 0;
+double h_max_range = 93;
+int BLUR = 2;
+int DILATE = 3;
+int ERODE = 2;
+int Circle_diameter = 2;//zmienne
 #pragma endregion
-#pragma region bool parametres (Is_)
+
+#pragma region bool parametres
+bool Is_Contour_active = false;
 bool Is_Original_active = false;
 bool Is_HSV_active = false;
 bool Is_Drawing_active = false;
@@ -28,26 +30,16 @@ bool Is_Drawing_area_being_selected = false;
 bool Is_Drawing_area_selected = false;
 bool Is_Tracking_active = false;
 bool Is_backprojMode = false;
-bool Is_Contour_active = false;
 #pragma endregion 
-#pragma region Drawing and seelecting area  (Area_*)
 
-
+#pragma region Drawing and seelecting area
 cv::Rect Area_Rectangular;
 cv::Point Area_Point_begin;
 cv::Point Area_Point_end;
-
-
-
-#pragma endregion%
-cv::Point2i pt(-1, -1);
 int Drawing_line_Color_Value = 0;
+cv::Point2i pt(-1, -1);
+#pragma endregion%
 
-
-
-#pragma temporary variables
-int mouseX, mouseY;
-#pragma endregion
 
 struct Position
 {
@@ -79,7 +71,7 @@ namespace GUI {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
-		
+
 	public:
 		MyForm(void)
 		{
@@ -170,7 +162,6 @@ namespace GUI {
 			this->Image_Original->Size = System::Drawing::Size(1274, 592);
 			this->Image_Original->TabIndex = 3;
 			this->Image_Original->TabStop = false;
-			
 			this->Image_Original->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Down_Image_Original);
 			this->Image_Original->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Up_Image_Original);
 			// 
@@ -217,6 +208,8 @@ namespace GUI {
 
 		}
 #pragma endregion
+
+
 #pragma region Trackbary (Trackbars_Create)
 		void on_trackbar(int, void*)
 		{//This function gets called whenever a
@@ -225,11 +218,11 @@ namespace GUI {
 		void Trackbars_Create()
 		{
 			cv::namedWindow("Trackbars", 0);
-			cv::createTrackbar("Thresh lb", "Trackbars", &Trackbar_H_MIN, 360, NULL);
-			cv::createTrackbar("Thresh ub", "Trackbars", &Trackbar_H_MAX, 360, NULL);
+			cv::createTrackbar("Thresh lb", "Trackbars", &H_MIN, 360, NULL);
+			cv::createTrackbar("Thresh ub", "Trackbars", &H_MAX, 360, NULL);
 			//cv::createTrackbar("Diameter scale", "Trackbars", &diameterScale, 10, 0);
-			cv::createTrackbar("Dilate", "Trackbars", &Trackbar_DILATE, 15, NULL);
-			cv::createTrackbar("Erode", "Trackbars", &Trackbar_ERODE, 15, NULL);
+			cv::createTrackbar("Dilate", "Trackbars", &DILATE, 15, NULL);
+			cv::createTrackbar("Erode", "Trackbars", &ERODE, 15, NULL);
 			//cv::createTrackbar("Line color", "Trackbars", &lineColorValue, 4, NULL);
 		}
 #pragma endregion
@@ -293,24 +286,25 @@ namespace GUI {
 		{
 			if (Is_Drawing_active)
 			{
-				if (Trackbar_Circle_diameter == 0)
+				if (Circle_diameter == 0)
 				{
-					Trackbar_Circle_diameter = 1;
+					Circle_diameter = 1;
 				}
-				circle(img, center, radius / Trackbar_Circle_diameter, color, -1, cv::LINE_AA);
+				circle(img, center, radius / Circle_diameter, color, -1, cv::LINE_AA);
 			}
 		}
 		void Drawing_line(cv::InputOutputArray img, Position poczatkowa, Position koncowa, const cv::Scalar& color)
 		{
 			if (Is_Drawing_active)
 			{
-				if (Trackbar_Circle_diameter <= 0)
+				if (Circle_diameter <= 0)
 				{
-					Trackbar_Circle_diameter = 1;
+					Circle_diameter = 1;
 				}
-				line(img, poczatkowa.point, koncowa.point, color, koncowa.r / Trackbar_Circle_diameter);
+				line(img, poczatkowa.point, koncowa.point, color, koncowa.r / Circle_diameter);
 			}
-		}	
+		}
+
 #pragma endregion
 #pragma region Image processing functions (Operation_*) :::Operacje morfologiczne i DrawCVOmage
 		void Operation_DrawCVImage(System::Windows::Forms::Control^ control, cv::Mat& colorImage)
@@ -324,35 +318,38 @@ namespace GUI {
 		}
 		void Operation_Deactivate()
 		{
+			Is_Drawing_active = false;
+			Is_Drawing_area_being_selected = false;
+			Is_Drawing_area_selected = false;
 			Is_HSV_active = false;
 			Is_Original_active = false;
 			Is_Contour_active = false;
 			Is_Drawing_area_being_selected = false;
 		}
 		void Operation_filter_Blur(cv::Mat &thresh) {
-			if (Trackbar_BLUR < 1)
+			if (BLUR < 1)
 			{
-				Trackbar_BLUR = 1;
+				BLUR = 1;
 			}
-			blur(thresh, thresh, cv::Size(Trackbar_BLUR, Trackbar_BLUR));
+			blur(thresh, thresh, cv::Size(BLUR, BLUR));
 		}
 
 		void Operation_filter_Erode(cv::Mat &thresh) {
-			if (Trackbar_ERODE < 1)
+			if (ERODE < 1)
 			{
-				Trackbar_ERODE = 1;
+				ERODE = 1;
 			}
-			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(Trackbar_ERODE, Trackbar_ERODE));
+			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(ERODE, ERODE));
 
 			erode(thresh, thresh, erodeElement);
 		}
 
 		void Operation_filter_Dilate(cv::Mat &thresh) {
-			if (Trackbar_DILATE < 1)
+			if (DILATE < 1)
 			{
-				Trackbar_DILATE = 1;
+				DILATE = 1;
 			}
-			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(Trackbar_DILATE, Trackbar_DILATE));
+			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(DILATE, DILATE));
 
 			dilate(thresh, thresh, dilateElement);
 		}
@@ -366,142 +363,152 @@ namespace GUI {
 
 #pragma endregion
 #pragma region mouse actions (Mouse_)
-private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
-{
-	std::cout << "Mouse_Down";
-	/*this->Cursor = new Cursor(Cursor->Current.Handle);
+	private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
+	{
+		std::cout << "Mouse_Down_EVENT";
+		/*this->Cursor = new Cursor(Cursor->Current.Handle);
 
-	int xCoordinate = Cursor.Position.X;
-	int yCoordinate = Cursor.Position.Y;*/
-	//Operation_Deactivate();
-	mouseX = e->X;
-	mouseY = e->Y;
-	Is_Drawing_area_being_selected = true;
-	Image_Original->Refresh();
-	//Timer_Capture->Start();
-}
-private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) 
-{
-	std::cout << "Mouse_Up";
-	Is_Drawing_area_being_selected = false;
-	if(Is_Original_active==true)Trackbars_Create();
-	Is_Drawing_area_being_selected = false;
-	Is_Drawing_area_selected = true;
-	Area_Point_end.x = Image_Original->Cursor->Position.X;
-	Area_Point_end.y = Image_Original->Cursor->Position.Y;
-}
+		int xCoordinate = Cursor.Position.X;
+		int yCoordinate = Cursor.Position.Y;*/
+		//Operation_Deactivate();
+		Area_Point_begin = cv::Point(Image_Original->Cursor->Position.X, Image_Original->Cursor->Position.Y);
+		Is_Drawing_area_being_selected = true;
+		//Timer_Capture->Start();
+	}
+	private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
+	{
+		std::cout << "Mouse_Up";
+		Is_Drawing_area_being_selected = false;
+		if (Is_Original_active == true)Trackbars_Create();
+		Operation_Deactivate();
+		Is_Drawing_area_selected = true;
+		Is_Original_active = true;
+		cv::rectangle(mat_img, Area_Rectangular, cv::Scalar(255), 20, 8, 0);
+		//Area_Point_end.x = Image_Original->Cursor->Position.X;
+		//Area_Point_end.y = Image_Original->Cursor->Position.Y;
+
+	}
 #pragma endregion
 #pragma region Button actions (Button_*)
-//approved
-private: System::Void Button_Video_Start(System::Object^  sender, System::EventArgs^  e) 
-{
-	//Trackbars_Create();
-	Operation_Deactivate();
-//	cv::setMouseCallback(window_name[0], Mouse_Action, (void *)&pt);
-	capture = cv::VideoCapture(0);
-	Image_Original->Show();
-	Timer_Capture->Start();
-}
-//approved
-private: System::Void Button_Video_Stop(System::Object^  sender, System::EventArgs^  e) 
-{
-	Timer_Capture->Stop();
-	capture.release();
-	Image_Original->Hide();
-}//Implemented
-//approved
-private: System::Void Button_Show_Contour(System::Object^  sender, System::EventArgs^  e)
-{
-	if (Is_Contour_active == false)
+			 //approved
+	private: System::Void Button_Video_Start(System::Object^  sender, System::EventArgs^  e)
+	{
+		capture.release();
+		//Trackbars_Create();
+		Operation_Deactivate();
+		//	cv::setMouseCallback(window_name[0], Mouse_Action, (void *)&pt);
+		capture = cv::VideoCapture(0);
+		Image_Original->Show();
+		Timer_Capture->Start();
+	}
+			 //approved
+	private: System::Void Button_Video_Stop(System::Object^  sender, System::EventArgs^  e)
 	{
 		Operation_Deactivate();
-		Is_Contour_active = true;
-	}
-}
-//approved
-private: System::Void Button_Show_HSV(System::Object^  sender, System::EventArgs^  e)
-{
-	if (Is_HSV_active == false)
+		Timer_Capture->Stop();
+		capture.release();
+		Image_Original->Hide();
+	}//Implemented
+	 //approved
+	private: System::Void Button_Show_Contour(System::Object^  sender, System::EventArgs^  e)
 	{
-		Operation_Deactivate();
-		Is_HSV_active = true;
-		//if (capture.isOpened() == true)std::cout << "Opened";	
+		if (Is_Contour_active == false)
+		{
+			Operation_Deactivate();
+			Is_Contour_active = true;
+		}
 	}
-}
-//approved
- private: System::Void Button_Show_Original(System::Object^  sender, System::EventArgs^  e)
- {
-	 if (Is_Original_active == false)
-	 {
-		 Operation_Deactivate();
-		 Is_Original_active = true;
+			 //approved
+	private: System::Void Button_Show_HSV(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (Is_HSV_active == false)
+		{
+			Operation_Deactivate();
+			Is_HSV_active = true;
+			//if (capture.isOpened() == true)std::cout << "Opened";	
+		}
+	}
+			 //approved
+	private: System::Void Button_Show_Original(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (Is_Original_active == false)
+		{
+			Operation_Deactivate();
+			Is_Original_active = true;
 
-	 }
- }
+		}
+	}
 #pragma endregion 
 #pragma region Real time capture(Timer_motion)
-private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e) 
-{
-	
-	capture >> mat_frame;
-	flip(mat_frame, mat_frame, 1);
-	mat_frame.copyTo(mat_img);
-	if (Is_Original_active)
+	private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e)
 	{
-		if (Is_Drawing_area_being_selected)
+
+		capture >> mat_frame;
+		flip(mat_frame, mat_frame, 1);
+		mat_frame.copyTo(mat_img);
+		if (Is_Original_active)
 		{
-			std::cout << "Mouse_Down\n";
+			if (Is_Drawing_area_being_selected)
+			{
+				
+				std::cout << "Mouse_Down\n";
+				std::cout << Image_Original->Cursor->Position.X;
+				//Area_Rectangular = cv::Rect(Area_Point_begin.x, Area_Point_begin.y, 100, 100);
+				Area_Rectangular.x = MIN(Image_Original->Cursor->Position.X, Area_Point_begin.x);
+				Area_Rectangular.y = MIN(Image_Original->Cursor->Position.Y, Area_Point_begin.y);
+				Area_Rectangular.width = std::abs(Image_Original->Cursor->Position.X - Area_Point_begin.x);
+				Area_Rectangular.height = std::abs(Image_Original->Cursor->Position.Y - Area_Point_begin.y);
+				//Area_Rectangular &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);
+
 			
-	
-			//Area_Rectangular = cv::Rect(Image_Original->Cursor->Position.X, Image_Original->Cursor->Position.Y,0,0);
-			//Operation_DrawCVImage(Image_Original, mat_img);
-			//std::cout << Image_Original->Cursor->Position.X;
+				
+
+			}
+			if (Is_Drawing_area_selected &&Is_Drawing_area_being_selected == false)
+			{	
+				std::cout << "Begin position X:" << Area_Point_begin.x << " Y " << Area_Point_begin.y << "\n";
+				std::cout << "End position X:" << Image_Original->Cursor->Position.X << " Y " << Image_Original->Cursor->Position.Y << "\n";
+				std::cout << "Area_Rectangular.width" << Area_Rectangular.width;
+				std::cout << "Area_Rectangular.height" << Area_Rectangular.height;
+				
+				//std::cout << "Area selected";
+				//cv::rectangle(mat_img, Area_Rectangular, cv::Scalar(255), 1, 8, 0);
+				//cv::Mat roi(mat_img, Area_Rectangular);
+				//bitwise_not(roi, roi);
+				//mat_roi =mat_img(Area_Rectangular);
+				//mat_roi.copyToLoadedImage(WhereRec);
+				//cv::Rect WhereRec(0, 0, Roi.cols, Roi.rows);
+				//std::cout << "Drawing area selected";
+				/*Area_Rectangular.x = MIN(x, Area_Point_begin.x);
+				Area_Rectangular.y = MIN(y, Area_Point_begin.y);
+				Area_Rectangular.width = std::abs(x - Area_Point_begin.x);
+				Area_Rectangular.height = std::abs(y - Area_Point_begin.y);*/
+			}
+			Operation_DrawCVImage(Image_Original, mat_img);
 		}
-		if (Is_Drawing_area_selected &&Is_Drawing_area_being_selected==false)
+		if (Is_HSV_active)
 		{
 
-			//std::cout << "Drawing area selected";
-			std::cout << "X" << Image_Original->Cursor->Position.X << "\n";
-			std::cout << "Y" << Image_Original->Cursor->Position.Y << "\n";
-			cv::Rect Rec(100, 100, 50, 50);
-			rectangle(mat_img, Rec, cv::Scalar(255), 1, 8, 0);
-			cv::Mat Roi = mat_img(Rec);
-			cv::Rect WhereRec(100, 100, Roi.cols, Roi.rows);
-			Roi.copyTo(mat_img(WhereRec));
-			//cv::setMouseCallback(mat_img, CallBackFunc, NULL);
-			//cv::Mat roi(mat_img, selection);
-			//bitwise_not(roi, roi);
-			/*Area_Rectangular.x = MIN(x, Area_Point_begin.x);
-			Area_Rectangular.y = MIN(y, Area_Point_begin.y);
-			Area_Rectangular.width = std::abs(x - Area_Point_begin.x);
-			Area_Rectangular.height = std::abs(y - Area_Point_begin.y);*/
+			cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
+			Operation_DrawCVImage(Image_Original, mat_img);
+
 		}
-		Operation_DrawCVImage(Image_Original, mat_img);
-	}
-	if (Is_HSV_active)
-	{
+		if (Is_Contour_active)
+		{
 
-		cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
-		Operation_DrawCVImage(Image_Original, mat_img);
+			cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
+			split(mat_img, mat_img_split);
+			cv::inRange(mat_img_split[0], H_MIN, H_MAX, mat_img);
+			int ch[] = { 0, 0 };
+			cv::mixChannels(&mat_img, 1, &mat_img_split[0], 1, ch, 1);
+			Operation_filter(mat_img);
+			Operation_DrawCVImage(Image_Original, mat_img);
 
-	}
-	if (Is_Contour_active)
-	{
-		
-		cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
-		split(mat_img, mat_img_split);
-		cv::inRange(mat_img_split[0],Trackbar_H_MIN, Trackbar_H_MAX, mat_img);
-		int ch[] = { 0, 0 };
-		cv::mixChannels(&mat_img, 1, &mat_img_split[0], 1, ch, 1);
-		Operation_filter(mat_img);
-		Operation_DrawCVImage(Image_Original, mat_img);
+		}
+		else Operation_DrawCVImage(Image_Original, mat_img);
 
 	}
-	else Operation_DrawCVImage(Image_Original, mat_img);
-	
-}
 #pragma endregion
 
-
-};
+	};
 }
