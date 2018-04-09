@@ -9,11 +9,53 @@ cv::VideoCapture capture;
 cv::Mat mat_frame;
 cv::Mat mat_img;
 std::vector<cv::Mat> mat_img_split;
+#pragma region Trackbar parametry
+int H_MIN = 0;
+int H_MAX = 0;
+double h_min_range = 0;
+double h_max_range = 93;
+int BLUR = 2;
+int DILATE = 3;
+int ERODE = 2;
+int Circle_diameter = 2;//zmienne
+#pragma endregion
 
-
+#pragma region bool parametres
 bool Is_Contour_active = false;
 bool Is_Original_active = false;
 bool Is_HSV_active = false;
+bool Is_Drawing_active = false;
+bool Is_Drawing_area_being_selected = false;
+bool Is_Drawing_area_selected = false;
+bool Is_Tracking_active = false;
+bool Is_backprojMode = false;
+#pragma endregion 
+
+#pragma region Drawing and seelecting area
+cv::Rect Area_Rectangular;
+cv::Point Area_Point_begin;
+cv::Point Area_Point_end;
+int Drawing_line_Color_Value = 0;
+cv::Point2i pt(-1, -1);
+#pragma endregion%
+
+
+struct Position
+{
+	cv::Point2i point = cv::Point2i(0, 0);
+	int r = 0;
+
+	Position()
+	{
+		this->point = cv::Point2i(0, 0);
+		this->r = 0;
+	}
+	Position(cv::Point2i point, int r)
+	{
+		this->point = point;
+		this->r = r;
+	}
+}pozycja;
 namespace GUI {
 
 
@@ -28,6 +70,7 @@ namespace GUI {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+		
 	public:
 		MyForm(void)
 		{
@@ -118,6 +161,8 @@ namespace GUI {
 			this->Image_Original->Size = System::Drawing::Size(1274, 592);
 			this->Image_Original->TabIndex = 3;
 			this->Image_Original->TabStop = false;
+			this->Image_Original->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Down_Image_Original);
+			this->Image_Original->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Up_Image_Original);
 			// 
 			// Timer_Capture
 			// 
@@ -163,7 +208,104 @@ namespace GUI {
 		}
 #pragma endregion
 
-#pragma region Image processing functions Operation_*
+		
+#pragma region Trackbary (Trackbars_Create)
+		void on_trackbar(int, void*)
+		{//This function gets called whenever a
+		 // trackbar position is changed
+		}
+		void Trackbars_Create()
+		{
+			cv::namedWindow("Trackbars", 0);
+			cv::createTrackbar("Thresh lb", "Trackbars", &H_MIN, 360, NULL);
+			cv::createTrackbar("Thresh ub", "Trackbars", &H_MAX, 360, NULL);
+			//cv::createTrackbar("Diameter scale", "Trackbars", &diameterScale, 10, 0);
+			cv::createTrackbar("Dilate", "Trackbars", &DILATE, 15, NULL);
+			cv::createTrackbar("Erode", "Trackbars", &ERODE, 15, NULL);
+			//cv::createTrackbar("Line color", "Trackbars", &lineColorValue, 4, NULL);
+		}
+#pragma endregion
+#pragma region Funkcje rysujace (Drawing_*)
+		int Drawing_Radius_get(int x, int y)
+		{
+			if (x < y)
+			{
+				return x / 2;
+			}
+			else
+			{
+				return y / 2;
+			}
+		}
+		bool Drawing_Radius_move(Position actualposition, int movestabilize, int Radiustabilize)
+		{
+			bool stabilize = false;
+			if (abs(actualposition.point.x - pozycja.point.x) > movestabilize)
+			{
+				pozycja.point.x = actualposition.point.x;
+				stabilize = true;
+			}
+			if (abs(actualposition.point.y - pozycja.point.y) > movestabilize)
+			{
+				pozycja.point.y = actualposition.point.y;
+				stabilize = true;
+			}
+			if (abs(actualposition.r - pozycja.r) > Radiustabilize)
+			{
+				pozycja.r = actualposition.r;
+				stabilize = true;
+			}
+			return stabilize;
+		}
+		cv::Scalar Drawing_line_Color()
+		{
+			switch (Drawing_line_Color_Value)
+			{
+			case 0:
+				return cv::Scalar(0, 0, 0);
+
+			case 1:
+				return cv::Scalar(255, 255, 255);
+
+			case 2:
+				return cv::Scalar(255, 0, 0);
+
+			case 3:
+				return cv::Scalar(0, 255, 0);
+
+			case 4:
+				return cv::Scalar(0, 0, 255);
+
+			default:
+				return cv::Scalar(255, 255, 255);
+				break;
+			}
+		}
+		void Drawing_circle(cv::InputOutputArray img, cv::Point center, int radius, const cv::Scalar& color)
+		{
+			if (Is_Drawing_active)
+			{
+				if (Circle_diameter == 0)
+				{
+					Circle_diameter = 1;
+				}
+				circle(img, center, radius / Circle_diameter, color, -1, cv::LINE_AA);
+			}
+		}
+		void Drawing_line(cv::InputOutputArray img, Position poczatkowa, Position koncowa, const cv::Scalar& color)
+		{
+			if (Is_Drawing_active)
+			{
+				if (Circle_diameter <= 0)
+				{
+					Circle_diameter = 1;
+				}
+				line(img, poczatkowa.point, koncowa.point, color, koncowa.r / Circle_diameter);
+			}
+		}
+		
+#pragma endregion
+#pragma region Image processing functions (Operation_*) :::Operacje morfologiczne i DrawCVOmage
 		void Operation_DrawCVImage(System::Windows::Forms::Control^ control, cv::Mat& colorImage)
 		{
 			System::Drawing::Graphics^ graphics = control->CreateGraphics();
@@ -178,13 +320,122 @@ namespace GUI {
 			Is_HSV_active = false;
 			Is_Original_active = false;
 			Is_Contour_active = false;
+			Is_Drawing_area_being_selected = false;
 		}
+		void Operation_filter_Blur(cv::Mat &thresh) {
+			if (BLUR < 1)
+			{
+				BLUR = 1;
+			}
+			blur(thresh, thresh, cv::Size(BLUR, BLUR));
+		}
+
+		void Operation_filter_Erode(cv::Mat &thresh) {
+			if (ERODE < 1)
+			{
+				ERODE = 1;
+			}
+			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(ERODE, ERODE));
+
+			erode(thresh, thresh, erodeElement);
+		}
+
+		void Operation_filter_Dilate(cv::Mat &thresh) {
+			if (DILATE < 1)
+			{
+				DILATE = 1;
+			}
+			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(DILATE, DILATE));
+
+			dilate(thresh, thresh, dilateElement);
+		}
+
+		void Operation_filter(cv::Mat &thresh) {
+
+			Operation_filter_Dilate(thresh);
+
+			Operation_filter_Erode(thresh);
+		}
+
+#pragma endregion
+#pragma region mouse actions (Mouse_)
+		////static void Mouse_Action(int event, int x, int y, int flags, void*)
+		//{
+
+		//	if (Is_Drawing_area_selected == true)  //Zostaje pobrany obszar ktory zaznaczylismy myszka
+		//	{
+		//		//cout << "IsAreaSelected: " << IsAreaSelected << "\n";
+		//		Rectangular_selected_area.x = MIN(x, point_beginning.x);
+		//		Rectangular_selected_area.y = MIN(y, point_beginning.y);
+		//		Rectangular_selected_area.width = std::abs(x - point_beginning.x);
+		//		Rectangular_selected_area.height = std::abs(y - point_beginning.y);
+
+		//		Rectangular_selected_area &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+		//																				//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.x << "\n";
+		//																				//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.y << "\n";
+		//																				//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.width << "\n";
+		//																				//cout << "Rectangular_selected_area values: " << Rectangular_selected_area.height << "\n";
+		//	}
+
+		//	switch (event)
+		//	{
+		//	case cv::EVENT_LBUTTONDOWN:///zainicjowane po nacisnieciu przycisku myszki
+		//							   //cout << "Test myszki LButtonDOWN" << "\n";//Event na klikniecie myszki jest wywolywany prawidlowo
+		//		point_beginning = cv::Point(x, y);
+		//		Rectangular_selected_area = cv::Rect(x, y, 0, 0);
+		//		Is_Drawing_area_selected = true;
+		//		break;
+		//	case cv::EVENT_LBUTTONUP:////zainicjowane po puszczeniu przycisku myszki
+		//							 //cout << "Test myszki LButtonUP" << "\n";
+		//		Is_Drawing_area_selected = false;
+		//		//TODO zainicjowanie aktywacji tego if
+		//		if (Rectangular_selected_area.width > 0 && Rectangular_selected_area.height > 0) {
+		//			//cout << "Selected area width=" << Rectangular_selected_area.width << "\n";
+		//			//cout << "Selected area height=" << Rectangular_selected_area.height << "\n";
+		//			Is_Tracking_active = -1;
+		//		}
+		//		break;
+		//	}
+		//	//endregion
+
+        cv::Point Mouse_Get_Position(int X,int Y)
+		{
+			cv::Point data;
+			data.x = X;
+			data.y = Y; return data;
+		}
+
+
+private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
+{
+	std::cout << "Mouse_Down";
+	/*this->Cursor = new Cursor(Cursor->Current.Handle);
+
+	int xCoordinate = Cursor.Position.X;
+	int yCoordinate = Cursor.Position.Y;*/
+	//Operation_Deactivate();
+	Is_Drawing_area_being_selected = true;
+	//Timer_Capture->Start();
+}
+private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) 
+{
+	std::cout << "Mouse_Up";
+	Is_Drawing_area_being_selected = false;
+	if(Is_Original_active==true)Trackbars_Create();
+	Is_Drawing_area_being_selected = false;
+	Is_Drawing_area_selected = true;
+	Area_Point_end.x = Image_Original->Cursor->Position.X;
+	Area_Point_end.y = Image_Original->Cursor->Position.Y;
+
+}
 #pragma endregion
 #pragma region Button actions (Button_*)
 //approved
 private: System::Void Button_Video_Start(System::Object^  sender, System::EventArgs^  e) 
 {
+	//Trackbars_Create();
 	Operation_Deactivate();
+//	cv::setMouseCallback(window_name[0], Mouse_Action, (void *)&pt);
 	capture = cv::VideoCapture(0);
 	Image_Original->Show();
 	Timer_Capture->Start();
@@ -201,8 +452,7 @@ private: System::Void Button_Show_Contour(System::Object^  sender, System::Event
 {
 	if (Is_Contour_active == false)
 	{
-		Is_HSV_active = false;
-		Is_Original_active = false;
+		Operation_Deactivate();
 		Is_Contour_active = true;
 	}
 }
@@ -211,8 +461,8 @@ private: System::Void Button_Show_HSV(System::Object^  sender, System::EventArgs
 {
 	if (Is_HSV_active == false)
 	{
+		Operation_Deactivate();
 		Is_HSV_active = true;
-		Is_Original_active = false;
 		//if (capture.isOpened() == true)std::cout << "Opened";	
 	}
 }
@@ -221,8 +471,8 @@ private: System::Void Button_Show_HSV(System::Object^  sender, System::EventArgs
  {
 	 if (Is_Original_active == false)
 	 {
+		 Operation_Deactivate();
 		 Is_Original_active = true;
-		 Is_HSV_active = false;
 
 	 }
  }
@@ -230,40 +480,53 @@ private: System::Void Button_Show_HSV(System::Object^  sender, System::EventArgs
 #pragma region Real time capture(Timer_motion)
 private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e) 
 {
+
 	capture >> mat_frame;
 	flip(mat_frame, mat_frame, 1);
 	mat_frame.copyTo(mat_img);
 	if (Is_Original_active)
 	{
-#pragma region Przechwytywanie
-		//Is_Original_active = false;
-		//cv::cvtColor(img, img, cv::COLOR_BGR2HSV);
+		if (Is_Drawing_area_being_selected)
+		{
+			std::cout << "Mouse_Down\n";
+			std::cout << Image_Original->Cursor->Position.X;
+			Area_Point_begin = cv::Point(Image_Original->Cursor->Position.X, Image_Original->Cursor->Position.Y);
+			Area_Rectangular = cv::Rect(Image_Original->Cursor->Position.X, Image_Original->Cursor->Position.Y,0,0);
+			//Operation_DrawCVImage(Image_Original, mat_img);
+		}
+		if (Is_Drawing_area_selected &&Is_Drawing_area_being_selected==false)
+		{
+			std::cout << "Drawing area selected";
+			/*Area_Rectangular.x = MIN(x, Area_Point_begin.x);
+			Area_Rectangular.y = MIN(y, Area_Point_begin.y);
+			Area_Rectangular.width = std::abs(x - Area_Point_begin.x);
+			Area_Rectangular.height = std::abs(y - Area_Point_begin.y);*/
+		}
 		Operation_DrawCVImage(Image_Original, mat_img);
-#pragma endregion
 	}
 	if (Is_HSV_active)
 	{
-#pragma region Przechwytywanie
+
 		cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
 		Operation_DrawCVImage(Image_Original, mat_img);
-#pragma endregion
+
 	}
 	if (Is_Contour_active)
 	{
-#pragma region Przechwytywanie
+		
 		cv::cvtColor(mat_img, mat_img, cv::COLOR_BGR2HSV);
 		split(mat_img, mat_img_split);
-		cv::inRange(mat_img_split[0],100,200, mat_img);
+		cv::inRange(mat_img_split[0],H_MIN, H_MAX, mat_img);
 		int ch[] = { 0, 0 };
 		cv::mixChannels(&mat_img, 1, &mat_img_split[0], 1, ch, 1);
+		Operation_filter(mat_img);
 		Operation_DrawCVImage(Image_Original, mat_img);
-#pragma endregion
+
 	}
-	else
-	{
-		Operation_DrawCVImage(Image_Original, mat_img);
-	}
+	else Operation_DrawCVImage(Image_Original, mat_img);
+	
 }
 #pragma endregion
+
 };
 }
