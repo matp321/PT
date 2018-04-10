@@ -10,6 +10,8 @@ cv::Mat mat_frame;
 cv::Mat mat_img;
 cv::Mat mat_roi;
 std::vector<cv::Mat> mat_img_split;
+
+
 #pragma region Trackbar parametry
 int H_MIN = 0;
 int H_MAX = 0;
@@ -22,6 +24,7 @@ int Circle_diameter = 2;//zmienne
 #pragma endregion
 
 #pragma region bool parametres
+bool Is_Painting_active = false;
 bool Is_Contour_active = false;
 bool Is_Original_active = false;
 bool Is_HSV_active = false;
@@ -162,6 +165,7 @@ namespace GUI {
 			this->Image_Original->Size = System::Drawing::Size(1274, 592);
 			this->Image_Original->TabIndex = 3;
 			this->Image_Original->TabStop = false;
+			
 			this->Image_Original->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Down_Image_Original);
 			this->Image_Original->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Up_Image_Original);
 			// 
@@ -304,7 +308,6 @@ namespace GUI {
 				line(img, poczatkowa.point, koncowa.point, color, koncowa.r / Circle_diameter);
 			}
 		}
-
 #pragma endregion
 #pragma region Image processing functions (Operation_*) :::Operacje morfologiczne i DrawCVOmage
 		void Operation_DrawCVImage(System::Windows::Forms::Control^ control, cv::Mat& colorImage)
@@ -366,12 +369,9 @@ namespace GUI {
 	private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
 		std::cout << "Mouse_Down_EVENT";
-		/*this->Cursor = new Cursor(Cursor->Current.Handle);
 
-		int xCoordinate = Cursor.Position.X;
-		int yCoordinate = Cursor.Position.Y;*/
 		//Operation_Deactivate();
-		Area_Point_begin = cv::Point(Image_Original->Cursor->Position.X, Image_Original->Cursor->Position.Y);
+		//Area_Point_begin = cv::Point(&X, &Y);
 		Is_Drawing_area_being_selected = true;
 		//Timer_Capture->Start();
 	}
@@ -394,6 +394,9 @@ namespace GUI {
 	private: System::Void Button_Video_Start(System::Object^  sender, System::EventArgs^  e)
 	{
 		capture.release();
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+		
 		//Trackbars_Create();
 		Operation_Deactivate();
 		//	cv::setMouseCallback(window_name[0], Mouse_Action, (void *)&pt);
@@ -442,7 +445,10 @@ namespace GUI {
 #pragma region Real time capture(Timer_motion)
 	private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e)
 	{
-
+		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
+	Int32 X = Cursor->Position.X - P.X;
+	Int32 Y = Cursor->Position.Y - P.Y;
+	
 		capture >> mat_frame;
 		flip(mat_frame, mat_frame, 1);
 		mat_frame.copyTo(mat_img);
@@ -454,24 +460,24 @@ namespace GUI {
 				std::cout << "Mouse_Down\n";
 				std::cout << Image_Original->Cursor->Position.X;
 				//Area_Rectangular = cv::Rect(Area_Point_begin.x, Area_Point_begin.y, 100, 100);
-				Area_Rectangular.x = MIN(Image_Original->Cursor->Position.X, Area_Point_begin.x);
-				Area_Rectangular.y = MIN(Image_Original->Cursor->Position.Y, Area_Point_begin.y);
-				Area_Rectangular.width = std::abs(Image_Original->Cursor->Position.X - Area_Point_begin.x);
-				Area_Rectangular.height = std::abs(Image_Original->Cursor->Position.Y - Area_Point_begin.y);
-				//Area_Rectangular &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);
+				Area_Rectangular.x = MIN(X, Area_Point_begin.x);
+				Area_Rectangular.y = MIN(Y, Area_Point_begin.y);
+				Area_Rectangular.width = std::abs(X - Area_Point_begin.x);
+				Area_Rectangular.height = std::abs(Y - Area_Point_begin.y);
 
 			
-				
+				cv::rectangle(mat_img, Area_Rectangular, cv::Scalar(255), 1, 8, 0);
 
 			}
 			if (Is_Drawing_area_selected &&Is_Drawing_area_being_selected == false)
-			{	
-				std::cout << "Begin position X:" << Area_Point_begin.x << " Y " << Area_Point_begin.y << "\n";
+			{
+				
+			/*	std::cout << "Begin position X:" << Area_Point_begin.x << " Y " << Area_Point_begin.y << "\n";
 				std::cout << "End position X:" << Image_Original->Cursor->Position.X << " Y " << Image_Original->Cursor->Position.Y << "\n";
 				std::cout << "Area_Rectangular.width" << Area_Rectangular.width;
-				std::cout << "Area_Rectangular.height" << Area_Rectangular.height;
+				std::cout << "Area_Rectangular.height" << Area_Rectangular.height;*/
 				
-				//std::cout << "Area selected";
+				std::cout << "Area selected";
 				//cv::rectangle(mat_img, Area_Rectangular, cv::Scalar(255), 1, 8, 0);
 				//cv::Mat roi(mat_img, Area_Rectangular);
 				//bitwise_not(roi, roi);
@@ -484,7 +490,14 @@ namespace GUI {
 				Area_Rectangular.width = std::abs(x - Area_Point_begin.x);
 				Area_Rectangular.height = std::abs(y - Area_Point_begin.y);*/
 			}
+			//Image_Original->Invalidate();
+			
+			std::cout << " Cursor postion X:" << Cursor->Position.X << " Y " << Cursor->Position.Y << "\n";
+				
+			std::cout << "Location position X:" << X << " Y " <<Y << "\n";
+			cv::circle(mat_img, cv::Point(X, Y), 10, cv::Scalar(255, 0, 0), 2, cv::LINE_8,0);
 			Operation_DrawCVImage(Image_Original, mat_img);
+			
 		}
 		if (Is_HSV_active)
 		{
@@ -510,5 +523,5 @@ namespace GUI {
 	}
 #pragma endregion
 
-	};
+};
 }
