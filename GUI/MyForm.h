@@ -5,7 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv/cv.hpp>
 #include <vector>
-//#include "Obiekt.cpp"
+#include "Obiekt.cpp"
 cv::VideoCapture capture;
 cv::Mat mat_frame;
 cv::Mat mat_img;
@@ -23,7 +23,8 @@ int histogram_Size = 16;
 float histogram_Zasieg[] = { 0, 180 };
 const float *histogram_pointer_Zasieg = histogram_Zasieg;
 std::vector<cv::Point2i>Drawing_points;
-//std::vector<Obiekt>obiekt;
+std::vector<Obiekt>obiekt;
+int temp;
 
 struct Drawing_Position
 {
@@ -143,6 +144,7 @@ namespace GUI {
 	private: System::Windows::Forms::Button^  button_pauses;
 	private: System::Windows::Forms::Timer^  Timer_Capture_pause;
 	private: System::Windows::Forms::Button^  button_clear;
+	private: System::Windows::Forms::Button^  button_reset;
 
 
 
@@ -171,6 +173,7 @@ namespace GUI {
 			this->button_pauses = (gcnew System::Windows::Forms::Button());
 			this->Timer_Capture_pause = (gcnew System::Windows::Forms::Timer(this->components));
 			this->button_clear = (gcnew System::Windows::Forms::Button());
+			this->button_reset = (gcnew System::Windows::Forms::Button());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->Image_Original))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_Objects_Detect))->BeginInit();
 			this->SuspendLayout();
@@ -276,11 +279,22 @@ namespace GUI {
 			this->button_clear->UseVisualStyleBackColor = true;
 			this->button_clear->Click += gcnew System::EventHandler(this, &MyForm::Button_Clear_Card);
 			// 
+			// button_reset
+			// 
+			this->button_reset->Location = System::Drawing::Point(-2, 130);
+			this->button_reset->Name = L"button_reset";
+			this->button_reset->Size = System::Drawing::Size(109, 23);
+			this->button_reset->TabIndex = 11;
+			this->button_reset->Text = L"RESET";
+			this->button_reset->UseVisualStyleBackColor = true;
+			this->button_reset->Click += gcnew System::EventHandler(this, &MyForm::Button_Reset);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(776, 512);
+			this->Controls->Add(this->button_reset);
 			this->Controls->Add(this->button_clear);
 			this->Controls->Add(this->button_pauses);
 			this->Controls->Add(this->Text_Number_of_Objects);
@@ -409,9 +423,9 @@ namespace GUI {
 		{
 			Is_Drawing_active = false;
 			Is_Drawing_area_being_selected = false;
-			Is_Drawing_area_selected = false;
+			Is_Tracking_active = false;
 			Is_HSV_active = false;
-			Is_Original_active = false;
+			//Is_Original_active = false;
 			Is_Contour_active = false;
 		}
 		void Operation_filter_Blur(cv::Mat &thresh) {
@@ -461,7 +475,7 @@ namespace GUI {
 		 Area_Point_begin = cv::Point(X, Y);
 		Is_Drawing_area_being_selected = true;
 		Is_Drawing_area_selected = false;
-		Is_Original_active = true;
+		//Is_Original_active = true;
 		//Timer_Capture->Start();
 	}
 	private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
@@ -479,6 +493,7 @@ namespace GUI {
 		}
 		if (Area_Rectangular_selected.width > 0 && Area_Rectangular_selected.height > 0) 
 		{
+			temp--;
 			//cout << "Selected area width=" << Rectangular_selected_area.width << "\n";
 			//cout << "Selected area height=" << Rectangular_selected_area.height << "\n";
 			Is_Drawing_area_being_selected = false;
@@ -488,10 +503,17 @@ namespace GUI {
 			//Timer_Capture->Start();
 		    Area_Point_end.x = Image_Original->Cursor->Position.X;
 			Area_Point_end.y = Image_Original->Cursor->Position.Y;
+
 		}
 	}
 #pragma endregion
 #pragma region Button actions (Button_*)
+		private: System::Void Button_Reset(System::Object^  sender, System::EventArgs^  e) {
+			std::cout << "CHeck";
+			temp = (int)numeric_Objects_Detect->Value;
+			Operation_Deactivate();
+			Image_Original->Enabled = true;
+		}
 		private: System::Void Button_Clear_Card(System::Object^  sender, System::EventArgs^  e) 
 		{
 			mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -522,7 +544,9 @@ namespace GUI {
 	{
 		if(Is_start_active==false)
 		{ 
+			Image_Original->Enabled = true;
 			button_pauses->Enabled = true;
+			temp = (int)numeric_Objects_Detect->Value;
 			Operation_Deactivate();
 			Is_Original_active = true;
 			button_start->Text = "STOP";
@@ -532,7 +556,7 @@ namespace GUI {
 		capture.set(CV_CAP_PROP_FRAME_HEIGHT,320);
 		Operation_Deactivate();
 		//	cv::setMouseCallback(window_name[0], Mouse_Action, (void *)&pt);
-		capture = cv::VideoCapture(0);
+		capture = cv::VideoCapture("Video.mp4");
 		Image_Original->Show();
 		Timer_Capture->Start();
 		return;
@@ -605,6 +629,7 @@ button_drawing->Text = "Stop drawing"; return;
 	cv::namedWindow("HISTOGRAM", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("CONTOUR", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("CARD", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("BACKPROJ", cv::WINDOW_AUTOSIZE);
 
 	
 		capture >> mat_frame;
@@ -615,9 +640,10 @@ button_drawing->Text = "Stop drawing"; return;
 		{
 			cv::cvtColor(mat_img, mat_hsv, cv::COLOR_BGR2HSV);
 			cv::split(mat_hsv, mat_hsv_split);
+			int ch[] = { 0, 0 };
+			cv::mixChannels(&mat_hsv, 1, &mat_hsv_split[0], 1, ch, 1);
 			cv::inRange(mat_hsv_split[0], Trackbars_parametr_H_MIN, Trackbars_parametr_H_MAX, mat_contour);
-			//int ch[] = { 0, 0 };
-			//cv::mixChannels(&mat_hsv, 1, &mat_hsv_split[0], 1, ch, 1);
+
 			Operation_filter(mat_contour);
 			if (Is_Drawing_area_being_selected)
 			{			
@@ -631,12 +657,12 @@ button_drawing->Text = "Stop drawing"; return;
 				cv::rectangle(mat_img, Area_Rectangular_selected, cv::Scalar(128), 1, 8, 0);
 				Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
 			}	
-				//std::cout << Area_Rectangular_selected.width << "\n";
-				//std::cout << Area_Rectangular_selected.height << "\n";			
+			if (temp == 0)Image_Original->Enabled = false;
 				if (Is_Tracking_active)
 				{		
+				//	if ((int)numeric_Objects_Detect->Value == 1)return;
 					if (Is_Tracking_active<0)
-					{
+					{					
 						//std::cout << "initalization";
 						//wydzielanie wartosci HUE
 						cv::Mat mat_roi_H(mat_hsv_split[0], Area_Rectangular_selected), mat_roi_Contour(mat_contour, Area_Rectangular_selected);
@@ -705,10 +731,10 @@ button_drawing->Text = "Stop drawing"; return;
 						//addWeighted(mat_img, 1, mat_card, 0.9, 0.0, mat_img);
 						cv::imshow("CARD", mat_card);
 						cv::imshow("CONTOUR",mat_contour);
+						cv::imshow("BACKPROJ", mat_backproj);
 				}					
 		cv::circle(mat_img, cv::Point(X, Y), 1, cv::Scalar(255, 0, 0), 1, cv::LINE_8,0);//Kursor
-			//Operation_DrawCVImage(Image_Original, mat_img);
-				//cv::imshow("CONTOUR", mat_img);
+		
 		}
 		if (Is_HSV_active)
 		{
@@ -748,10 +774,11 @@ private: System::Void Timer_motion_pause(System::Object^  sender, System::EventA
 		Area_Rectangular_selected.height = std::abs(Y - Area_Point_begin.y);
 		cv::rectangle(mat_temp, Area_Rectangular_selected, cv::Scalar(128), 1, 8, 0);
 		Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+		Operation_DrawCVImage(Image_Original, mat_temp);
 	}
-	Operation_DrawCVImage(Image_Original, mat_temp);
-
+	
 }
+
 
 
 
