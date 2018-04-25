@@ -70,7 +70,7 @@ bool Is_pause_active = false;
 
 #pragma region Drawing and seelecting area
 cv::Rect Area_Rectangular_selected;
-cv::Rect Area_Rectangular_tracked;
+
 cv::Point Area_Point_begin;
 cv::Point Area_Point_end;
 int Drawing_line_Color_Value = 0;
@@ -480,6 +480,7 @@ namespace GUI {
 	}
 	private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
+		
 		std::cout << "Mouse_Up";
 		Is_Drawing_area_being_selected = false;
 		//if (Is_Original_active == true)
@@ -494,6 +495,7 @@ namespace GUI {
 		if (Area_Rectangular_selected.width > 0 && Area_Rectangular_selected.height > 0) 
 		{
 			temp--;
+			
 			//cout << "Selected area width=" << Rectangular_selected_area.width << "\n";
 			//cout << "Selected area height=" << Rectangular_selected_area.height << "\n";
 			Is_Drawing_area_being_selected = false;
@@ -501,8 +503,11 @@ namespace GUI {
 			button_drawing->Enabled = true;
 			Is_Drawing_active = false;
 			//Timer_Capture->Start();
-		    Area_Point_end.x = Image_Original->Cursor->Position.X;
-			Area_Point_end.y = Image_Original->Cursor->Position.Y;
+		   // Area_Point_end.x = Image_Original->Cursor->Position.X;
+			//Area_Point_end.y = Image_Original->Cursor->Position.Y;
+			//obiekt.at(temp - 1).setp2(Area_Point_end);
+			//cout<<
+			obiekt.push_back(Obiekt(Area_Point_begin, Area_Rectangular_selected));
 
 		}
 	}
@@ -563,6 +568,7 @@ namespace GUI {
 		}
 		if (Is_start_active == true)
 		{
+			obiekt.clear();
 			button_pauses->Enabled = false;
 			Is_Original_active = false;
 			Image_Original->Hide();
@@ -626,10 +632,10 @@ button_drawing->Text = "Stop drawing"; return;
 		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
 	Int32 X = Cursor->Position.X - P.X;
 	Int32 Y = Cursor->Position.Y - P.Y;
-	cv::namedWindow("HISTOGRAM", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow("CONTOUR", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow("CARD", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow("BACKPROJ", cv::WINDOW_AUTOSIZE);
+	//cv::namedWindow("HISTOGRAM", cv::WINDOW_AUTOSIZE);
+	//cv::namedWindow("CONTOUR", cv::WINDOW_AUTOSIZE);
+	//cv::namedWindow("CARD", cv::WINDOW_AUTOSIZE);
+	//cv::namedWindow("BACKPROJ", cv::WINDOW_AUTOSIZE);
 
 	
 		capture >> mat_frame;
@@ -650,10 +656,12 @@ button_drawing->Text = "Stop drawing"; return;
 				//std::cout << "Mouse_Down\n";
 				//std::cout << Image_Original->Cursor->Position.X;
 				//Area_Rectangular = cv::Rect(Area_Point_begin.x, Area_Point_begin.y, 100, 100);
+				
 				Area_Rectangular_selected.x = MIN(X, Area_Point_begin.x);
 				Area_Rectangular_selected.y = MIN(Y, Area_Point_begin.y);
 				Area_Rectangular_selected.width = std::abs(X - Area_Point_begin.x);
-				Area_Rectangular_selected.height = std::abs(Y - Area_Point_begin.y);			
+				Area_Rectangular_selected.height = std::abs(Y - Area_Point_begin.y);
+				//obiekt.at(0).setRectangle(X, Y);
 				cv::rectangle(mat_img, Area_Rectangular_selected, cv::Scalar(128), 1, 8, 0);
 				Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
 			}	
@@ -671,7 +679,7 @@ button_drawing->Text = "Stop drawing"; return;
 						Trackbars_parametr_H_MAX = (int)h_max_range;
 						cv::calcHist(&mat_roi_H, 1, 0, mat_roi_Contour, mat_histogram, 1, &histogram_Size, &histogram_pointer_Zasieg);
 						cv::normalize(mat_histogram, mat_histogram, 0, 255, cv::NORM_MINMAX);
-						Area_Rectangular_tracked = Area_Rectangular_selected;
+						//cv::Rect Area_Rectangular_tracked = Area_Rectangular_selected;
 						//cout << "Histogram picture\n" << histogrampicture.rows << "\n" << histogrampicture.cols;///Jest to zwykla rozdzielczosc
 						Is_Tracking_active = 1;
 						mat_histogram_picture = cv::Scalar::all(0);
@@ -692,18 +700,18 @@ button_drawing->Text = "Stop drawing"; return;
 						}
 						std::cout << "h_min_range" << h_min_range << "\n";
 						std::cout << "h_max_range" << h_max_range << "\n";
-						imshow("HISTOGRAM", mat_histogram_picture);
-						imshow("CONTOUR", mat_contour);
+						//imshow("HISTOGRAM", mat_histogram_picture);
+						//imshow("CONTOUR", mat_contour);
 						mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
 					}
 						cv::calcBackProject(&mat_hsv_split[0], 1, 0, mat_histogram, mat_backproj, &histogram_pointer_Zasieg);
 						mat_backproj &= mat_contour;
-						cv::RotatedRect Area_Rectangular_tracked_trackbox = cv::CamShift(mat_backproj, Area_Rectangular_tracked,
+						cv::RotatedRect Area_Rectangular_tracked_trackbox = cv::CamShift(mat_backproj,  Area_Rectangular_selected,
 							cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)); //
-						if (Area_Rectangular_tracked.area() <= 1)
+						if ( Area_Rectangular_selected.area() <= 1)
 						{
 							int cols = mat_backproj.cols, rows = mat_backproj.rows, r = (MIN(cols, rows) + 5) / 6;
-							Area_Rectangular_tracked = cv::Rect(Area_Rectangular_tracked.x - r, Area_Rectangular_tracked.y - r, Area_Rectangular_tracked.x + r, Area_Rectangular_tracked.y + r) & cv::Rect(0, 0, cols, rows);
+							 Area_Rectangular_selected = cv::Rect( Area_Rectangular_selected.x - r,  Area_Rectangular_selected.y - r,  Area_Rectangular_selected.x + r,  Area_Rectangular_selected.y + r) & cv::Rect(0, 0, cols, rows);
 						}
 						if (Is_backprojMode)
 						{
@@ -729,9 +737,9 @@ button_drawing->Text = "Stop drawing"; return;
 						circle(mat_img, position.point, pozycja.r / Trackbars_parametr_diameterScale, cv::Scalar(0, 0, 255), 1, cv::LINE_8);
 					//koniec
 						//addWeighted(mat_img, 1, mat_card, 0.9, 0.0, mat_img);
-						cv::imshow("CARD", mat_card);
-						cv::imshow("CONTOUR",mat_contour);
-						cv::imshow("BACKPROJ", mat_backproj);
+						//cv::imshow("CARD", mat_card);
+						//cv::imshow("CONTOUR",mat_contour);
+						//cv::imshow("BACKPROJ", mat_backproj);
 				}					
 		cv::circle(mat_img, cv::Point(X, Y), 1, cv::Scalar(255, 0, 0), 1, cv::LINE_8,0);//Kursor
 		
