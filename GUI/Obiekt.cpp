@@ -6,6 +6,22 @@
 #include <vector>
 
 
+struct Drawing_Position
+{
+	cv::Point2i point = cv::Point2i(0, 0);
+	int r = 0;
+
+	Drawing_Position()
+	{
+		this->point = cv::Point2i(0, 0);
+		this->r = 0;
+	}
+	Drawing_Position(cv::Point2i point, int r)
+	{
+		this->point = point;
+		this->r = r;
+	}
+};
 
 class Obiekt
 {
@@ -20,7 +36,8 @@ public:
 		this->mat_contour = mat_contour;
 		this->histogram = histogram;
 	}
-
+	void setTracking_Points(Drawing_Position Tracking_Points) { this->Tracking_Points = Tracking_Points; }
+	Drawing_Position getTracking_Points() { return this->Tracking_Points; }
 	void setRectangle_tracked(cv::RotatedRect rectangle_tracked) { this->rectangle_tracked = rectangle_tracked; }
 	cv::RotatedRect getRectangle_tracked() { return this->rectangle_tracked; }
 	void setMat_contour(cv::Mat mat_contour) { this->mat_contour = mat_contour; }
@@ -52,4 +69,5 @@ private:
 	cv::Mat histogram;
 	cv::Mat mat_contour;
 	cv::RotatedRect rectangle_tracked;
+	Drawing_Position Tracking_Points;
 };

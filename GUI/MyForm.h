@@ -6,6 +6,12 @@
 #include <opencv/cv.hpp>
 #include <vector>
 #include "Obiekt.cpp"
+
+
+
+
+Drawing_Position position;
+Drawing_Position *Tracking_points;
 int counter = 0;
 cv::VideoCapture capture;
 cv::Mat mat_frame;
@@ -44,22 +50,7 @@ double h_max_range = 360;
 cv::String names[] = { "1","2","3","4","5"};
 const cv::String *names_pointer = names;
 
-struct Drawing_Position
-{
-	cv::Point2i point = cv::Point2i(0, 0);
-	int r = 0;
 
-	Drawing_Position()
-	{
-		this->point = cv::Point2i(0, 0);
-		this->r = 0;
-	}
-	Drawing_Position(cv::Point2i point, int r)
-	{
-		this->point = point;
-		this->r = r;
-	}
-}position;
 
 #pragma region Trackbar parametry
 int Trackbars_parametr_H_MIN = 0;
@@ -213,6 +204,7 @@ namespace GUI {
 			this->Image_Original->Size = System::Drawing::Size(640, 480);
 			this->Image_Original->TabIndex = 3;
 			this->Image_Original->TabStop = false;
+			this->Image_Original->Click += gcnew System::EventHandler(this, &MyForm::Image_Original_Click);
 			this->Image_Original->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Down_Image_Original);
 			this->Image_Original->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Up_Image_Original);
 			// 
@@ -678,7 +670,7 @@ namespace GUI {
 				
 					for (int y = 0; y < histogram_Size; y++) 
 					{
-						buffor.at<cv::Vec3b>(y) = cv::Vec3b(cv::saturate_cast<uchar>(y * 180. / histogram_Size), 255, 255);
+						buffor.at<cv::Vec3b>(y) = cv::Vec3b(cv::saturate_cast<uchar>(y * 180/ histogram_Size), 255, 255);
 					}
 					cvtColor(buffor, buffor, cv::COLOR_HSV2BGR);
 					for (int x = 0; x < histogram_Size; x++) {
@@ -689,6 +681,7 @@ namespace GUI {
 					mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
 					cv::imshow(window_histogram[0], mat_histogram_picture);
 					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range, mat_contour_temp, mat_histogram));
+					
 				}
 				for (int i = 0; i < obiekt.size(); i++)
 				{		
@@ -698,21 +691,23 @@ namespace GUI {
 						cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)); 
 					
 				
-					std::cout << "Rectangle after nr" << i << "x" << obiekt.at(i).getRectangle().x << "\n";
+					//std::cout << "Rectangle after nr" << i << "x" << obiekt.at(i).getRectangle().x << "\n";
 					
 					//cv::cvtColor(mat_backproj, mat_img, cv::COLOR_GRAY2BGR);		
-					Drawing_Position point_track = Drawing_Position(Area_Rectangular_tracked_trackbox.center, Drawing_Radius_get(Area_Rectangular_tracked_trackbox.size.width, Area_Rectangular_tracked_trackbox.size.height));
-					position = point_track;
+					
+				    // position = point_track;
+					obiekt.at(i).setTracking_Points(Drawing_Position(Area_Rectangular_tracked_trackbox.center, Drawing_Radius_get(Area_Rectangular_tracked_trackbox.size.width, Area_Rectangular_tracked_trackbox.size.height)));
 					if (Is_Drawing_active == true)
 					{
-						circle(mat_card, position.point, position.r / Trackbars_parametr_diameterScale, cv::Scalar(0, 0, 0), 4, cv::LINE_AA);
+						circle(mat_card, obiekt.at(0).getTracking_Points().point, position.r / Trackbars_parametr_diameterScale, cv::Scalar(0, 0, 0), 4, cv::LINE_AA);
+						circle(mat_card, obiekt.at(1).getTracking_Points().point, position.r / Trackbars_parametr_diameterScale, cv::Scalar(0, 0, 0), 4, cv::LINE_AA);
 					}
 				  
-				    cv::circle(mat_img, position.point, 20, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-					cv::circle(mat_img, position.point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
-					cv::circle(mat_img, position.point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-					cv::putText(mat_img, names_pointer[i], position.point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
-					
+				    cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 20, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
+					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
+					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
+					cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
+					cv::imshow(window_card[0], mat_card);
 					
 				}
 			}
@@ -753,5 +748,7 @@ namespace GUI {
 		}
 
 	}
-	};
+	private: System::Void Image_Original_Click(System::Object^  sender, System::EventArgs^  e) {
+	}
+};
 }
