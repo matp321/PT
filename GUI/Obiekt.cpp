@@ -6,62 +6,29 @@
 #include <vector>
 
 
+
 class Obiekt
 {
 public:
-	 //void setX(System::Int32 X)
-	 //{
-		// this->X = X;
-	 //}
-	 //void setY(System::Int32 Y)
-	 //{
-		// this->Y = Y;
-	 //}
-	 //System::Int32 getX()
-	 //{
-		// return this->X;
-	 //}
-	 //System::Int32 getY()
-	 //{
-		// return this->Y;
-	 //}
-	Obiekt(cv::Point p1,cv::Rect rectangle)
+	
+	Obiekt() {};
+	Obiekt(cv::Rect rectangle,int Hmin,int Hmax, cv::Mat mat_contour, cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
-		this->p1 = p1;
-
-	}
-	int getHmin()
-	 {
-		return this->Hmin;
-	 }
-	void setHmin(int Hmin)
-	{
-		this->Hmin = Hmin;
-
-	}
-	int getHmax()
-	{
-		return this->Hmax;
-	}
-	void setHmax(int Hmax)
-	{
 		this->Hmax = Hmax;
+		this->Hmin = Hmin;
+		this->mat_contour = mat_contour;
+		this->histogram = histogram;
+	}
 
-	}
-	//Obiekt()
-	cv::Point getp1()
-	{
-		return this->p1;
-	}
-	void setp1(cv::Point p1)
-	{
-		this->p1 = p1;
-	}
-	//Area_Rectangular_selected.x = MIN(X, obiekt.at(temp - 1).getp1().x);
-	//Area_Rectangular_selected.y = MIN(Y, obiekt.at(temp-1).getp1().y);
-	//Area_Rectangular_selected.width = std::abs(X - obiekt.at(temp - 1).getp1().x);
-	//Area_Rectangular_selected.height = std::abs(Y - obiekt.at(temp - 1).getp1().y);
+	void setRectangle_tracked(cv::RotatedRect rectangle_tracked) { this->rectangle_tracked = rectangle_tracked; }
+	cv::RotatedRect getRectangle_tracked() { return this->rectangle_tracked; }
+	void setMat_contour(cv::Mat mat_contour) { this->mat_contour = mat_contour; }
+	cv::Mat getMat_contour() { return this->mat_contour; }
+	void setHmin(double Hmin) { this->Hmin = Hmin; }
+	double getHmin() { return this->Hmin; }
+	void setHmax(double Hmax) { this->Hmax = Hmax; }
+	double getHmax() { return this->Hmax; }
 	cv::Rect getRectangle()
 	{		
 		return this->rectangle;
@@ -70,11 +37,19 @@ public:
 	{
 		this->rectangle = rectangle;
 	}
+	void sethistogram(cv::Mat histogram)
+	{
+		this->histogram = histogram;
+	}
+	cv::Mat gethistogram()
+	{
+		return this->histogram;
+	}
 	
 private:
-	//System::Int32 X,Y;
 	cv::Rect rectangle;
-	int Hmin, Hmax;
-	cv::Point p1;
-	//cv::Point p2;
+	double Hmin, Hmax;
+	cv::Mat histogram;
+	cv::Mat mat_contour;
+	cv::RotatedRect rectangle_tracked;
 };
