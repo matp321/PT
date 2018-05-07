@@ -26,16 +26,20 @@ struct Drawing_Position
 class Obiekt
 {
 public:
-	
+	cv::Rect rectangle;
 	Obiekt() {};
-	Obiekt(cv::Rect rectangle,int Hmin,int Hmax, cv::Mat mat_contour, cv::Mat histogram)
+	Obiekt(cv::Rect rectangle,int Hmin,int Hmax,cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
 		this->Hmax = Hmax;
 		this->Hmin = Hmin;
-		this->mat_contour = mat_contour;
 		this->histogram = histogram;
+		this->color = cv::Scalar(255, 0, 0);
 	}
+	void setErode(int erode) { this->erode = erode; }
+	int getErode() { return this->erode; }
+	void setDilate(int dilate) { this->dilate = dilate; }
+	int getDilate() { return this->dilate; }
 	void setTracking_Points(Drawing_Position Tracking_Points) { this->Tracking_Points = Tracking_Points; }
 	Drawing_Position getTracking_Points() { return this->Tracking_Points; }
 	void setRectangle_tracked(cv::RotatedRect rectangle_tracked) { this->rectangle_tracked = rectangle_tracked; }
@@ -62,12 +66,16 @@ public:
 	{
 		return this->histogram;
 	}
-	
+	void setColor(cv::Scalar color) { this->color = color; }
+	cv::Scalar getColor() { return this->color; }
+
 private:
-	cv::Rect rectangle;
+
+	int erode, dilate;
 	double Hmin, Hmax;
 	cv::Mat histogram;
 	cv::Mat mat_contour;
 	cv::RotatedRect rectangle_tracked;
 	Drawing_Position Tracking_Points;
+	cv::Scalar color;
 };
