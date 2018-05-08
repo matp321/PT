@@ -28,6 +28,8 @@ class Obiekt
 public:
 	cv::Rect rectangle;
 	Obiekt() {};
+	int erode, dilate;
+	int Hmin, Hmax;
 	Obiekt(cv::Rect rectangle,int Hmin,int Hmax,cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
@@ -71,8 +73,7 @@ public:
 
 private:
 
-	int erode, dilate;
-	double Hmin, Hmax;
+	
 	cv::Mat histogram;
 	cv::Mat mat_contour;
 	cv::RotatedRect rectangle_tracked;

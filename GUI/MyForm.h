@@ -11,7 +11,6 @@
 
 
 Drawing_Position position;
-Drawing_Position *Tracking_points;
 int counter = 0;
 cv::VideoCapture capture;
 cv::Mat mat_frame;
@@ -45,8 +44,8 @@ std::string window_contour_roi[] = { "Contour_roi_1", "Contour_roi_2","Contour_r
 std::string window_calback_proj[] = { "Callback_1", "Callback_2","Callback_3","Callback_4" };
 std::string window_card[] = { "card1", "card2","card3","card4","card5"};
 
-double h_min_range = 0;
-double h_max_range = 360;
+//double h_min_range = 0;
+//double h_max_range = 360;
 
 
 cv::String object_number[] = { "1","2","3","4","5"};
@@ -57,8 +56,8 @@ const cv::String *names_pointer = object_number;
 #pragma region Trackbar parametry
 int Trackbars_parametr_H_MIN = 0;
 int Trackbars_parametr_H_MAX = 360;
-//double h_min_range = 0;
-//double h_max_range = 93;
+double h_min_range = 0;
+double h_max_range = 93;
 int Trackbars_parametr_BLUR = 2;
 int Trackbars_parametr_DILATE = 3;
 int Trackbars_parametr_ERODE = 2;
@@ -333,11 +332,11 @@ namespace GUI {
 		void Trackbars_Create(int i)
 		{
 			cv::namedWindow(window_trackbar[i], 0);
-			cv::createTrackbar("Thresh lb", window_trackbar[i], &Trackbars_parametr_H_MIN, 360, NULL);
-			cv::createTrackbar("Thresh ub", window_trackbar[i], &Trackbars_parametr_H_MAX, 360, NULL);
+			cv::createTrackbar("Thresh lb", window_trackbar[i], &obiekt.at(i).Hmin, 360, NULL);
+			cv::createTrackbar("Thresh ub", window_trackbar[i], &obiekt.at(i).Hmax, 360, NULL);
 			//cv::createTrackbar("Diameter scale", "Trackbars", &diameterScale, 10, 0);
-			cv::createTrackbar("Dilate", window_trackbar[i], &Trackbars_parametr_DILATE, 15, NULL);
-			cv::createTrackbar("Erode", window_trackbar[i], &Trackbars_parametr_ERODE, 15, NULL);
+			cv::createTrackbar("Dilate", window_trackbar[i], &obiekt.at(i).dilate, 15, NULL);
+			cv::createTrackbar("Erode", window_trackbar[i], &obiekt.at(i).erode, 15, NULL);
 			//cv::createTrackbar("Line color", "Trackbars", &lineColorValue, 4, NULL);
 		}
 #pragma endregion
@@ -394,35 +393,35 @@ namespace GUI {
 			//Is_Original_active = false;
 			Is_Contour_active = false;
 		}
-		void Operation_filter_Blur(cv::Mat &thresh) {
+		void Operation_filter_Blur(cv::Mat &thresh,int i) {
 			if (Trackbars_parametr_BLUR < 1)
 			{
 				Trackbars_parametr_BLUR = 1;
 			}
 			cv::blur(thresh, thresh, cv::Size(Trackbars_parametr_BLUR, Trackbars_parametr_BLUR));
 		}
-		void Operation_filter_Erode(cv::Mat &thresh) {
-			if (Trackbars_parametr_ERODE < 1)
+		void Operation_filter_Erode(cv::Mat &thresh,int i) {
+			if (obiekt.at(i).erode < 1)
 			{
-				Trackbars_parametr_ERODE = 1;
+				obiekt.at(i).erode = 1;
 			}
-			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(Trackbars_parametr_ERODE, Trackbars_parametr_ERODE));
+			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).erode, obiekt.at(i).erode));
 
 			erode(thresh, thresh, erodeElement);
 		}
-		void Operation_filter_Dilate(cv::Mat &thresh) {
-			if (Trackbars_parametr_DILATE < 1)
+		void Operation_filter_Dilate(cv::Mat &thresh,int i) {
+			if (obiekt.at(i).dilate < 1)
 			{
-				Trackbars_parametr_DILATE = 1;
+				obiekt.at(i).dilate = 1;
 			}
-			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(Trackbars_parametr_DILATE, Trackbars_parametr_DILATE));
+			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).dilate, (obiekt.at(i).dilate)));
 
 			dilate(thresh, thresh, dilateElement);
 		}
 
-		void Operation_filter(cv::Mat &thresh) {
-			Operation_filter_Dilate(thresh);
-			Operation_filter_Erode(thresh);
+		void Operation_filter(cv::Mat &thresh,int i) {
+			Operation_filter_Dilate(thresh,i);
+			Operation_filter_Erode(thresh,i);
 		}
 
 #pragma endregion
@@ -626,6 +625,8 @@ namespace GUI {
 				{
 					cv::Mat mat_roi_H=cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
 					cv::minMaxLoc(mat_roi_H, &h_min_range, &h_max_range, nullptr, nullptr);
+					std::cout << "H_min_range" << h_min_range << "\n";
+					std::cout << "H_max_range" << h_max_range << "\n";
 					cv::inRange(mat_hsv_split[0], h_min_range, h_max_range, mat_contour);
 					cv::Mat mat_roi_Contour=cv::Mat(mat_contour, Area_Rectangular_selected);//p
 					//cv::Mat mat_roi_H = cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
@@ -649,24 +650,27 @@ namespace GUI {
 							cv::Point((x + 1) * binW, mat_histogram_picture.rows - val), cv::Scalar(buffor.at<cv::Vec3b>(x)), -1, 8);
 					}
 					mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
-					cv::imshow(window_histogram[0], mat_histogram_picture);
+					
 					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range,mat_histogram));	
-					std::cout << "CHECKxxx";
+					cv::imshow(window_histogram[obiekt.size()-1], mat_histogram_picture);
+					Trackbars_Create(obiekt.size()-1);
 				
 				}			
 				for (int i = 0; i < obiekt.size(); i++)
 				{
-					Trackbars_Create(i);
+					
 					cv::Mat mat_contour_temp;
-					cv::inRange(mat_hsv_split[0], obiekt.at(i).getHmin(), obiekt.at(i).getHmax(), mat_contour_temp);
-					Operation_filter(mat_contour_temp);
-					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), mat_backproj, &histogram_pointer_Zasieg);
+					cv::inRange(mat_hsv_split[0], obiekt.at(i).Hmin, obiekt.at(i).Hmax, mat_contour_temp);
+					Operation_filter(mat_contour_temp, i);
+					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), mat_backproj, &histogram_pointer_Zasieg);		
 					mat_backproj &= mat_contour_temp;
+					
 					cv::RotatedRect Area_Rectangular_tracked_trackbox = cv::CamShift(mat_backproj, obiekt.at(i).rectangle
 						,cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)); 
 					obiekt.at(i).setRectangle_tracked(Area_Rectangular_tracked_trackbox);
 					obiekt.at(i).setTracking_Points(Drawing_Position(Area_Rectangular_tracked_trackbox.center, Drawing_Radius_get(Area_Rectangular_tracked_trackbox.size.width, Area_Rectangular_tracked_trackbox.size.height)));
 					obiekt.at(i).setMat_contour(mat_contour_temp);
+					
 					if (Is_Drawing_active == true)
 					{
 						Drawing_Radius_move(position, 5, 5);
@@ -684,9 +688,9 @@ namespace GUI {
 					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
 					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
 					cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
-					cv::imshow(window_card[0], mat_card);	
-					cv::imshow(window_calback_proj[0],mat_backproj);
-				    cv::imshow(window_contour[i], obiekt.at(i).getMat_contour());
+					//cv::imshow(window_card[0], mat_card);	
+				  cv::imshow(window_calback_proj[i], mat_backproj);
+				  cv::imshow(window_contour[i],mat_contour_temp);
 					
 		
 				}
@@ -704,7 +708,7 @@ namespace GUI {
 		{
 			///cv::cvtColor(mat_img, mat_hsv, cv::COLOR_BGR2HSV);
 			cv::inRange(mat_hsv_split[0], Trackbars_parametr_H_MIN, Trackbars_parametr_H_MAX, mat_contour);
-			Operation_filter(mat_contour);
+			//Operation_filter(mat_contour);
 			//return;
 		}
 		Operation_DrawCVImage(Image_Original, mat_img);
