@@ -30,6 +30,8 @@ public:
 	Obiekt() {};
 	int erode, dilate;
 	int Hmin, Hmax;
+	cv::Mat mat_contour;
+	cv::Mat mat_backproj;
 	Obiekt(cv::Rect rectangle,int Hmin,int Hmax,cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
@@ -37,7 +39,12 @@ public:
 		this->Hmin = Hmin;
 		this->histogram = histogram;
 		this->color = cv::Scalar(255, 0, 0);
+		this->erode = 4;
+		this->dilate = 1;
+
 	}
+	void setMat_backproj(cv::Mat mat_backproj) { this->mat_backproj = mat_backproj; }
+	cv::Mat getMat_backproj() { return this->mat_backproj; }
 	void setErode(int erode) { this->erode = erode; }
 	int getErode() { return this->erode; }
 	void setDilate(int dilate) { this->dilate = dilate; }
@@ -73,9 +80,7 @@ public:
 
 private:
 
-	
 	cv::Mat histogram;
-	cv::Mat mat_contour;
 	cv::RotatedRect rectangle_tracked;
 	Drawing_Position Tracking_Points;
 	cv::Scalar color;
