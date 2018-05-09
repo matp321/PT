@@ -636,7 +636,7 @@ namespace GUI {
 		//cv::imshow("HISTOGRAM", mat_frame);
 		if (Is_Original_active)
 		{
-			cv::cvtColor(mat_img, mat_hsv, cv::COLOR_BGR2HSV);
+			cv::cvtColor(mat_frame, mat_hsv, cv::COLOR_BGR2HSV);
 			cv::split(mat_hsv, mat_hsv_split);
 			int ch[] = { 0, 0 };
 			cv::mixChannels(&mat_hsv, 1, &mat_hsv_split[0], 1, ch, 1);	
@@ -656,6 +656,9 @@ namespace GUI {
 			{
 				if (Is_Tracking_active < 0)
 				{
+					cv::Mat mat_histogram_temp;
+					
+
 					cv::Mat mat_roi_H=cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
 					cv::minMaxLoc(mat_roi_H, &h_min_range, &h_max_range, nullptr, nullptr);
 					std::cout << "H_min_range" << h_min_range << "\n";
@@ -663,10 +666,13 @@ namespace GUI {
 					cv::inRange(mat_hsv_split[0], h_min_range, h_max_range, mat_contour);
 					cv::Mat mat_roi_Contour=cv::Mat(mat_contour, Area_Rectangular_selected);//p
 					//cv::Mat mat_roi_H = cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
-					Trackbars_parametr_H_MIN = h_min_range;
-					Trackbars_parametr_H_MAX = h_max_range;
-					calcHist(&mat_roi_H, 1, 0, mat_roi_Contour, mat_histogram, 1, &histogram_Size, &histogram_pointer_Zasieg);
-					cv::normalize(mat_histogram, mat_histogram, 0, 255, cv::NORM_MINMAX);
+					//Trackbars_parametr_H_MIN = h_min_range;
+					//Trackbars_parametr_H_MAX = h_max_range;
+					calcHist(&mat_roi_H, 1, 0, mat_roi_Contour, mat_histogram_temp, 1, &histogram_Size, &histogram_pointer_Zasieg);
+					std::cout << "histogram_pointer_Zasieg[0];" << histogram_pointer_Zasieg[0] << "\n";
+					std::cout << "histogram_pointer_Zasieg[1];" << histogram_pointer_Zasieg[1] << "\n";
+
+					cv::normalize(mat_histogram_temp, mat_histogram_temp, 0, 255, cv::NORM_MINMAX);
 					Is_Tracking_active = 1;
 					mat_histogram_picture = cv::Scalar::all(0);
 					int binW = mat_histogram_picture.cols / histogram_Size;
@@ -678,13 +684,12 @@ namespace GUI {
 					}
 					cvtColor(buffor, buffor, cv::COLOR_HSV2BGR);
 					for (int x = 0; x < histogram_Size; x++) {
-						int val = cv::saturate_cast<int>(mat_histogram.at<float>(x) * mat_histogram_picture.rows / 255);
+						int val = cv::saturate_cast<int>(mat_histogram_temp.at<float>(x) * mat_histogram_picture.rows / 255);
 						cv::rectangle(mat_histogram_picture, cv::Point(x * binW, mat_histogram_picture.rows),
 							cv::Point((x + 1) * binW, mat_histogram_picture.rows - val), cv::Scalar(buffor.at<cv::Vec3b>(x)), -1, 8);
 					}
-					mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
-					
-					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range,mat_histogram));	
+					mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));					
+					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range, mat_histogram_temp));
 					cv::imshow(window_histogram[obiekt.size()-1], mat_histogram_picture);
 				
 
@@ -693,39 +698,35 @@ namespace GUI {
 				}			
 				for (int i = 0; i < obiekt.size(); i++)
 				{
-					
+
 					
 					cv::inRange(mat_hsv_split[0], obiekt.at(i).Hmin, obiekt.at(i).Hmax, obiekt.at(i).mat_contour);
 					Operation_filter(obiekt.at(i).mat_contour, i);
-					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);
-					obiekt.at(i).mat_backproj &= obiekt.at(i).mat_contour;
-					obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
-						, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)));
-					obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
-					//obiekt.at(i).setMat_contour(mat_contour_temp);
-					if (Is_Drawing_active == true)
-					{
-						Drawing_Radius_move(position, 5, 5);
-						cv::line(mat_card, obiekt.at(0).getTracking_Points().point,position.point, obiekt.at(0).getColor(),5,1);
-						cv::line(mat_card, obiekt.at(1).getTracking_Points().point, position.point, obiekt.at(1).getColor(), 5, 1);
-						
-					}
-				/*	if (obiekt.at(i).getRectangle_tracked().boundingRect().area() <= 1)
-					{
-						int cols = obiekt.at(i).mat_backproj.cols, rows = obiekt.at(i).mat_backproj.rows, r = (MIN(cols, rows) + 5) / 6;
-						obiekt.at(i).setRectangle(cv::Rect(obiekt.at(i).getRectangle().x - r, obiekt.at(i).getRectangle().y - r, obiekt.at(i).getRectangle().x + r, obiekt.at(i).getRectangle().y + r) & cv::Rect(0, 0, cols, rows));
-					}*/
-					position = obiekt.at(i).getTracking_Points();
-				    cv::circle(mat_img, obiekt.at(i).getRectangle_tracked().center, 20, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
-					cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-					cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
-					cv::imshow(window_card[0], mat_img);	
-					cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
-				    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
-				
+					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);		
+				    obiekt.at(i).mat_backproj &= obiekt.at(i).mat_contour;
+				    obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
+					, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)));
+				    obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
+				if (Is_Drawing_active == true)
+				{
+					Drawing_Radius_move(position, 5, 5);
+					cv::line(mat_card, obiekt.at(0).getTracking_Points().point,position.point, obiekt.at(0).getColor(),5,1);
+					cv::line(mat_card, obiekt.at(1).getTracking_Points().point, position.point, obiekt.at(1).getColor(), 5, 1);
 					
-		
+				}
+			/*	if (obiekt.at(i).getRectangle_tracked().boundingRect().area() <= 1)
+				{
+					int cols = obiekt.at(i).mat_backproj.cols, rows = obiekt.at(i).mat_backproj.rows, r = (MIN(cols, rows) + 5) / 6;
+					obiekt.at(i).setRectangle(cv::Rect(obiekt.at(i).getRectangle().x - r, obiekt.at(i).getRectangle().y - r, obiekt.at(i).getRectangle().x + r, obiekt.at(i).getRectangle().y + r) & cv::Rect(0, 0, cols, rows));
+				}*/
+				position = obiekt.at(i).getTracking_Points();
+			    cv::circle(mat_img, obiekt.at(i).getRectangle_tracked().center, 20, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
+				cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
+				cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
+				cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
+				cv::imshow(window_card[0], mat_img);	
+			    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
+				cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
 				}
 			}
 			cv::circle(mat_img, cv::Point(X, Y), 1, cv::Scalar(255, 0, 0), 1, cv::LINE_8, 0);//Kursor
