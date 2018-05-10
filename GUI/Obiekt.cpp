@@ -28,10 +28,11 @@ class Obiekt
 public:
 	cv::Rect rectangle;
 	Obiekt() {};
-	int erode, dilate;
+	int erode, dilate, blur;
 	int Hmin, Hmax;
 	cv::Mat mat_contour;
 	cv::Mat mat_backproj;
+	Drawing_Position position;
 	Obiekt(cv::Rect rectangle,int Hmin,int Hmax,cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
@@ -39,8 +40,9 @@ public:
 		this->Hmin = Hmin;
 		this->histogram = histogram;
 		this->color = cv::Scalar(255, 0, 0);
-		this->erode = 4;
+		this->erode = 7;
 		this->dilate = 1;
+		this->blur = 2;
 
 	}
 	void setMat_backproj(cv::Mat mat_backproj) { this->mat_backproj = mat_backproj; }

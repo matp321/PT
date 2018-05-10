@@ -35,7 +35,8 @@ std::vector<Obiekt>obiekt;
 int temp;
 
 int j = 0;
-
+std::string window_trackbar_blur = {" Trackbar Blur"};
+std::string window_blur = { "Blur" };
 std::string window_trackbar[] = { "Trackbar 1", "Trackbar 2","Trackbar 3","Trackbar 4","Trackbar 5" };
 std::string window_histogram[] = {"Histogram1", "Histogram2","Histogram3","Histogram4"};
 std::string window_contour[] = {"Contour1", "Contour2","Contour3","Contour4","Contour 5"};
@@ -51,13 +52,18 @@ cv::String object_number[] = { "1","2","3","4","5"};
 const cv::String *names_pointer = object_number;
 
 
-
 #pragma region Trackbar parametry
+
+int Trackbars_parametr_BLUR = 0;
+int Trackbars_kernel_size_blur = 3;
+float Trackbars_sigma_blur = 0.3 *((Trackbars_kernel_size_blur - 1)*0.5 - 1) + 0.8;
+
+
 int Trackbars_parametr_H_MIN = 0;
 int Trackbars_parametr_H_MAX = 360;
 double h_min_range = 0;
 double h_max_range = 93;
-int Trackbars_parametr_BLUR = 2;
+
 int Trackbars_parametr_DILATE = 3;
 int Trackbars_parametr_ERODE = 2;
 int Trackbars_parametr_diameterScale = 2;//zmienne
@@ -75,6 +81,7 @@ int Is_Tracking_active = 0;
 bool Is_backprojMode = false;
 bool Is_start_active = false;
 bool Is_pause_active = false;
+bool Is_mouse_click_active = false;
 #pragma endregion 
 
 #pragma region Drawing and seelecting area
@@ -207,7 +214,6 @@ namespace GUI {
 			this->Image_Original->Size = System::Drawing::Size(640, 480);
 			this->Image_Original->TabIndex = 3;
 			this->Image_Original->TabStop = false;
-			this->Image_Original->Click += gcnew System::EventHandler(this, &MyForm::Mouse_Click);
 			this->Image_Original->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Down_Image_Original);
 			this->Image_Original->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MyForm::Mouse_Up_Image_Original);
 			// 
@@ -324,9 +330,16 @@ namespace GUI {
 		}
 #pragma endregion
 #pragma region Trackbary (Trackbars_Create)
-		void on_trackbar(int, void*)
+		static void on_trackbar_blur(int, void*)
 		{//This function gets called whenever a
-		 // trackbar position is changed
+			std::cout << "CALL";
+			Trackbars_kernel_size_blur = 2 * Trackbars_parametr_BLUR + 1;
+			Trackbars_sigma_blur = 0.3 *((Trackbars_kernel_size_blur - 1)*0.5 - 1) + 0.8;
+		}
+		void Trackbars_Create()
+		{		
+				cv::namedWindow(window_trackbar_blur, 0);
+				cv::createTrackbar("Gaussian blur(Orginal Image)", window_trackbar_blur, &Trackbars_parametr_BLUR, 21,NULL);
 		}
 		void Trackbars_Create(int size)
 		{
@@ -396,49 +409,20 @@ namespace GUI {
 			//Is_Original_active = false;
 			Is_Contour_active = false;
 		}
-		/*void Operation_filter_Blur(cv::Mat &thresh,int i) {
+
+		void Operation_filter_Blur(cv::Mat &original) {
 			if (Trackbars_parametr_BLUR < 1)
 			{
 				Trackbars_parametr_BLUR = 1;
 			}
-			cv::blur(thresh, thresh, cv::Size(Trackbars_parametr_BLUR, Trackbars_parametr_BLUR));
-		}
-		void Operation_filter_Erode(cv::Mat &thresh,int i) {
-			if (obiekt.at(i).erode < 1)
-			{
-				obiekt.at(i).erode = 1;
-			}
-			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).erode, obiekt.at(i).erode));
-
-			erode(thresh, thresh, erodeElement);
-		}
-		void Operation_filter_Dilate(cv::Mat &thresh,int i) {
-			if (obiekt.at(i).dilate < 1)
-			{
-				obiekt.at(i).dilate = 1;
-			}
-			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).dilate, (obiekt.at(i).dilate)));
-
-			dilate(thresh, thresh, dilateElement);
-		}
-
-		void Operation_filter(cv::Mat &thresh,int i) {
-			Operation_filter_Dilate(thresh,i);
-			Operation_filter_Erode(thresh,i);
-		}*/
-		void Operation_filter_Blur(cv::Mat &thresh) {
-			if (Trackbars_parametr_BLUR < 1)
-			{
-				Trackbars_parametr_BLUR = 1;
-			}
-			cv::blur(thresh, thresh, cv::Size(Trackbars_parametr_BLUR, Trackbars_parametr_BLUR));
+			cv::GaussianBlur(original, original, cv::Size(2*Trackbars_parametr_BLUR+1, 2 * Trackbars_parametr_BLUR + 1), 0.3 *(((2 * Trackbars_parametr_BLUR + 1) - 1)*0.5 - 1) + 0.8);
 		}
 		void Operation_filter_Erode(cv::Mat &thresh, int i) {
 			if (obiekt.at(i).erode < 1)
 			{
 				obiekt.at(i).erode = 1;
 			}
-			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).erode, obiekt.at(i).erode));
+			cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(obiekt.at(i).erode, obiekt.at(i).erode));
 
 			erode(thresh, thresh, erodeElement);
 		}
@@ -447,7 +431,7 @@ namespace GUI {
 			{
 				obiekt.at(i).dilate = 1;
 			}
-			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(obiekt.at(i).dilate, (obiekt.at(i).dilate)));
+			cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(obiekt.at(i).dilate, obiekt.at(i).dilate));
 
 			dilate(thresh, thresh, dilateElement);
 		}
@@ -455,46 +439,76 @@ namespace GUI {
 		void Operation_filter(cv::Mat &thresh, int i) {
 			Operation_filter_Dilate(thresh, i);
 			Operation_filter_Erode(thresh, i);
+			//Operation_filter_Blur(thresh, i);
 		}
 
 #pragma endregion
 #pragma region mouse actions (Mouse_)
 	private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
-		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
-		Int32 X = Cursor->Position.X - P.X;
-		Int32 Y = Cursor->Position.Y - P.Y;
-		std::cout << "Mouse_Down_EVENT";
-		Operation_Deactivate();
-		Is_Tracking_active = true;
-		Area_Point_begin = cv::Point(X, Y);
-		Is_Drawing_area_being_selected = true;
+		
+		if (e->Button == System::Windows::Forms::MouseButtons::Right)
+		{
+			std::cout << "Mouse_Down_EVENT right" << "\n";
+			Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
+			Int32 X = Cursor->Position.X - P.X;
+			Int32 Y = Cursor->Position.Y - P.Y;
+			for (int i = 0; i < obiekt.size(); i++)
+			{
+
+				if (obiekt.at(i).getRectangle_tracked().boundingRect().contains(cv::Point2i(X, Y)))
+				{
+					ColorDialog^ colordialog = gcnew ColorDialog;
+					colordialog->AllowFullOpen = true;
+					colordialog->ShowHelp = true;
+					colordialog->ShowDialog();
+					Color clr = colordialog->Color;
+					obiekt.at(i).setColor(cv::Scalar(clr.R, clr.G, clr.B));
+				}
+
+			}
+		}
+		if (e->Button == System::Windows::Forms::MouseButtons::Left)
+		{
+			std::cout << "Mouse_Down_EVENT left" << "\n";
+			Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
+			Int32 X = Cursor->Position.X - P.X;
+			Int32 Y = Cursor->Position.Y - P.Y;
+
+			Operation_Deactivate();
+			Is_Tracking_active = true;
+			Area_Point_begin = cv::Point(X, Y);
+			Is_Drawing_area_being_selected = true;
+		}
 
 		//Is_Original_active = true;
 		//Timer_Capture->Start();
 	}
 	private: System::Void Mouse_Up_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
+		if (e->Button == System::Windows::Forms::MouseButtons::Left)
+		{
 		
-		std::cout << "Mouse_Up";
-		Is_Drawing_area_being_selected = false;
-		//if (Is_Original_active == true)
-		Operation_Deactivate();
-		Is_Tracking_active = true;
-		Is_Original_active = true;
-		//Is_Tracking_active = -1;
-		if (Is_pause_active)
-		{
-			Operation_DrawCVImage(Image_Original, mat_img);
-		}
-		if (Area_Rectangular_selected.width > 10 && Area_Rectangular_selected.height > 10)
-		{
-			temp--;
+			std::cout << "Mouse_Up event left" << "\n";
 			Is_Drawing_area_being_selected = false;
-			Is_Tracking_active = -1;
-			button_drawing->Enabled = true;
-			Is_Drawing_active = false;	
-			std::cout << "Mouse check";
+			//if (Is_Original_active == true)
+			Operation_Deactivate();
+			Is_Tracking_active = true;
+			Is_Original_active = true;
+			//Is_Tracking_active = -1;
+			if (Is_pause_active)
+			{
+				Operation_DrawCVImage(Image_Original, mat_img);
+			}
+			if (Area_Rectangular_selected.width > 10 && Area_Rectangular_selected.height > 10)
+			{
+				temp--;
+				Is_Drawing_area_being_selected = false;
+				Is_Tracking_active = -1;
+				button_drawing->Enabled = true;
+				Is_Drawing_active = false;
+				std::cout << "Mouse check";
+			}
 		}
 	}
 #pragma endregion
@@ -509,7 +523,7 @@ namespace GUI {
 	}
 	private: System::Void Button_Clear_Card(System::Object^  sender, System::EventArgs^  e)
 	{
-		mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));
+		mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255,0));
 	}
 	private: System::Void Button_Pause(System::Object^  sender, System::EventArgs^  e)
 	{
@@ -539,10 +553,11 @@ namespace GUI {
 		
 	//	MyDialog->Color = textBox1->ForeColor;
 
-
+		Trackbars_Create();
 	
 		if (Is_start_active == false)
 		{
+			mat_card = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
 			Image_Original->Enabled = true;
 			button_pauses->Enabled = true;
 			temp = (int)numeric_Objects_Detect->Value;
@@ -559,11 +574,13 @@ namespace GUI {
 			Image_Original->Show();	
 			obiekt.clear();
 			Timer_Capture->Start();
+			
 		
 			return;
 		}
 		if (Is_start_active == true)
 		{
+			
 			obiekt.clear();
 			button_pauses->Enabled = false;
 			Is_Original_active = false;
@@ -610,7 +627,10 @@ namespace GUI {
 	private: System::Void Button_Drawing_Start_Stop(System::Object^  sender, System::EventArgs^  e)
 	{
 		if (Is_Drawing_active) {
-			Is_Drawing_active = false; button_drawing->Text = "Start drawing"; return;
+
+			cv::destroyWindow(window_card[0]);
+			Is_Drawing_active = false; 
+			button_drawing->Text = "Start drawing"; return;
 		}
 
 		if (Is_Drawing_active == false) {
@@ -624,7 +644,6 @@ namespace GUI {
 #pragma region Real time capture(Timer_motion)
 	private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e)
 	{
-		
 		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
 		Int32 X = Cursor->Position.X - P.X;
 		Int32 Y = Cursor->Position.Y - P.Y;
@@ -633,7 +652,8 @@ namespace GUI {
 		capture >> mat_frame;
 		flip(mat_frame, mat_frame, 1);
 		mat_frame.copyTo(mat_img);
-		//cv::imshow("HISTOGRAM", mat_frame);
+		Operation_filter_Blur(mat_frame);
+		cv::imshow(window_blur, mat_frame);
 		if (Is_Original_active)
 		{
 			cv::cvtColor(mat_frame, mat_hsv, cv::COLOR_BGR2HSV);
@@ -688,18 +708,15 @@ namespace GUI {
 						cv::rectangle(mat_histogram_picture, cv::Point(x * binW, mat_histogram_picture.rows),
 							cv::Point((x + 1) * binW, mat_histogram_picture.rows - val), cv::Scalar(buffor.at<cv::Vec3b>(x)), -1, 8);
 					}
-					mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255));					
+					
 					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range, mat_histogram_temp));
 					cv::imshow(window_histogram[obiekt.size()-1], mat_histogram_picture);
 				
-
 					Trackbars_Create(obiekt.size());
 				
 				}			
 				for (int i = 0; i < obiekt.size(); i++)
 				{
-
-					
 					cv::inRange(mat_hsv_split[0], obiekt.at(i).Hmin, obiekt.at(i).Hmax, obiekt.at(i).mat_contour);
 					Operation_filter(obiekt.at(i).mat_contour, i);
 					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);		
@@ -707,24 +724,23 @@ namespace GUI {
 				    obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
 					, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)));
 				    obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
-				if (Is_Drawing_active == true)
-				{
-					Drawing_Radius_move(position, 5, 5);
-					cv::line(mat_card, obiekt.at(0).getTracking_Points().point,position.point, obiekt.at(0).getColor(),5,1);
-					cv::line(mat_card, obiekt.at(1).getTracking_Points().point, position.point, obiekt.at(1).getColor(), 5, 1);
-					
-				}
-			/*	if (obiekt.at(i).getRectangle_tracked().boundingRect().area() <= 1)
-				{
-					int cols = obiekt.at(i).mat_backproj.cols, rows = obiekt.at(i).mat_backproj.rows, r = (MIN(cols, rows) + 5) / 6;
-					obiekt.at(i).setRectangle(cv::Rect(obiekt.at(i).getRectangle().x - r, obiekt.at(i).getRectangle().y - r, obiekt.at(i).getRectangle().x + r, obiekt.at(i).getRectangle().y + r) & cv::Rect(0, 0, cols, rows));
-				}*/
-				position = obiekt.at(i).getTracking_Points();
-			    cv::circle(mat_img, obiekt.at(i).getRectangle_tracked().center, 20, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-				cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i*40, i*40, i*40), 4, cv::LINE_8);//Tracking point
-				cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i*40, 0, 0), 4, cv::LINE_8);//Tracking point
-				cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
-				cv::imshow(window_card[0], mat_img);	
+					if (obiekt.at(i).getRectangle_tracked().boundingRect().area()>=30)
+					{
+
+						
+						cv::circle(mat_img, obiekt.at(i).getRectangle_tracked().center, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i * 40, i * 40, i * 40), 4, cv::LINE_8);//Tracking point
+						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+						cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
+						if (Is_Drawing_active == true)
+						{
+							Drawing_Radius_move(obiekt.at(i).position, 1, 1);
+							cv::line(mat_card, obiekt.at(i).position.point,obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getTracking_Points().r/2);					
+						}
+						obiekt.at(i).position = obiekt.at(i).getTracking_Points();
+							//= 
+					}
+				cv::imshow(window_card[0], mat_card);
 			    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
 				cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
 				}
@@ -765,30 +781,8 @@ namespace GUI {
 			Operation_DrawCVImage(Image_Original, mat_temp);
 		}
 	}
-	private: System::Void Image_Original_Click(System::Object^  sender, System::EventArgs^  e) {
-	}
-private: System::Void Mouse_Click(System::Object^  sender, System::EventArgs^  e) 
-{
-	std::cout << "Mouse click" << "\n";
-	Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
-	Int32 X = Cursor->Position.X - P.X;
-	Int32 Y = Cursor->Position.Y - P.Y;
-	for (int i = 0; i < obiekt.size(); i++)
-	{
-		if (obiekt.at(i).getRectangle_tracked().boundingRect().contains(cv::Point2i(X, Y)))
-		{
-			//ColorDialog^ colordialog = gcnew ColorDialog;
 
-			//// Keeps the user from selecting a custom color.
-			//colordialog->AllowFullOpen = false;
-			//// Allows the user to get help. (The default is false.)
-			//colordialog->ShowHelp = true;
-			//colordialog->ShowDialog();
-			//Color clr = colordialog->Color;
-			//obiekt.at(i).setColor(cv::Scalar(clr.R, clr.G, clr.B));
-		}
 
-	}
-}
+
 };
 }
