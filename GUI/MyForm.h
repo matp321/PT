@@ -145,13 +145,14 @@ namespace GUI {
 
 	private: System::Windows::Forms::Button^  button5;
 	private: System::Windows::Forms::Button^  button_drawing;
-	private: System::Windows::Forms::NumericUpDown^  numeric_Objects_Detect;
+
 	private: System::Windows::Forms::Label^  Text_Number_of_Objects;
 	private: System::Windows::Forms::Button^  button_pauses;
 	private: System::Windows::Forms::Timer^  Timer_Capture_pause;
 	private: System::Windows::Forms::Button^  button_clear;
 	private: System::Windows::Forms::Button^  button_reset;
 	private: System::Windows::Forms::ColorDialog^  Color_Dialog;
+	private: System::Windows::Forms::Label^  numeric_Object_Text;
 
 
 
@@ -176,15 +177,14 @@ namespace GUI {
 			this->Timer_Capture = (gcnew System::Windows::Forms::Timer(this->components));
 			this->button5 = (gcnew System::Windows::Forms::Button());
 			this->button_drawing = (gcnew System::Windows::Forms::Button());
-			this->numeric_Objects_Detect = (gcnew System::Windows::Forms::NumericUpDown());
 			this->Text_Number_of_Objects = (gcnew System::Windows::Forms::Label());
 			this->button_pauses = (gcnew System::Windows::Forms::Button());
 			this->Timer_Capture_pause = (gcnew System::Windows::Forms::Timer(this->components));
 			this->button_clear = (gcnew System::Windows::Forms::Button());
 			this->button_reset = (gcnew System::Windows::Forms::Button());
 			this->Color_Dialog = (gcnew System::Windows::Forms::ColorDialog());
+			this->numeric_Object_Text = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->Image_Original))->BeginInit();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_Objects_Detect))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// button1
@@ -243,25 +243,15 @@ namespace GUI {
 			this->button_drawing->UseVisualStyleBackColor = true;
 			this->button_drawing->Click += gcnew System::EventHandler(this, &MyForm::Button_Drawing_Start_Stop);
 			// 
-			// numeric_Objects_Detect
-			// 
-			this->numeric_Objects_Detect->Location = System::Drawing::Point(-2, 242);
-			this->numeric_Objects_Detect->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 10, 0, 0, 0 });
-			this->numeric_Objects_Detect->Minimum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 1, 0, 0, 0 });
-			this->numeric_Objects_Detect->Name = L"numeric_Objects_Detect";
-			this->numeric_Objects_Detect->Size = System::Drawing::Size(109, 20);
-			this->numeric_Objects_Detect->TabIndex = 7;
-			this->numeric_Objects_Detect->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 1, 0, 0, 0 });
-			// 
 			// Text_Number_of_Objects
 			// 
 			this->Text_Number_of_Objects->AutoSize = true;
 			this->Text_Number_of_Objects->Location = System::Drawing::Point(-5, 226);
 			this->Text_Number_of_Objects->Name = L"Text_Number_of_Objects";
-			this->Text_Number_of_Objects->Size = System::Drawing::Size(102, 13);
+			this->Text_Number_of_Objects->Size = System::Drawing::Size(105, 13);
 			this->Text_Number_of_Objects->TabIndex = 8;
 			this->Text_Number_of_Objects->Tag = L"Number of objects being detected";
-			this->Text_Number_of_Objects->Text = L"   Number of objects";
+			this->Text_Number_of_Objects->Text = L"   Number of objects:";
 			// 
 			// button_pauses
 			// 
@@ -305,16 +295,28 @@ namespace GUI {
 			this->Color_Dialog->ShowHelp = true;
 			this->Color_Dialog->HelpRequest += gcnew System::EventHandler(this, &MyForm::Button_Video_Start);
 			// 
+			// numeric_Object_Text
+			// 
+			this->numeric_Object_Text->AutoSize = true;
+			this->numeric_Object_Text->Font = (gcnew System::Drawing::Font(L"Century Gothic", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(238)));
+			this->numeric_Object_Text->Location = System::Drawing::Point(38, 254);
+			this->numeric_Object_Text->Name = L"numeric_Object_Text";
+			this->numeric_Object_Text->Size = System::Drawing::Size(24, 25);
+			this->numeric_Object_Text->TabIndex = 12;
+			this->numeric_Object_Text->Text = L"0";
+			this->numeric_Object_Text->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(767, 493);
+			this->Controls->Add(this->numeric_Object_Text);
 			this->Controls->Add(this->button_reset);
 			this->Controls->Add(this->button_clear);
 			this->Controls->Add(this->button_pauses);
 			this->Controls->Add(this->Text_Number_of_Objects);
-			this->Controls->Add(this->numeric_Objects_Detect);
 			this->Controls->Add(this->button_drawing);
 			this->Controls->Add(this->button5);
 			this->Controls->Add(this->Image_Original);
@@ -323,7 +325,6 @@ namespace GUI {
 			this->Name = L"MyForm";
 			this->Text = L"MyForm";
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->Image_Original))->EndInit();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_Objects_Detect))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -508,6 +509,7 @@ namespace GUI {
 				button_drawing->Enabled = true;
 				Is_Drawing_active = false;
 				std::cout << "Mouse check";
+				numeric_Object_Text->Text = (obiekt.size()+1).ToString();
 			}
 		}
 	}
@@ -516,9 +518,8 @@ namespace GUI {
 	private: System::Void Button_Reset(System::Object^  sender, System::EventArgs^  e) 
 		{
 		std::cout << "CHeck";
-		temp = (int)numeric_Objects_Detect->Value;
 		Operation_Deactivate();
-		Image_Original->Enabled = true;
+	//	Image_Original->Enabled = true;
 		obiekt.clear();
 	}
 	private: System::Void Button_Clear_Card(System::Object^  sender, System::EventArgs^  e)
@@ -558,7 +559,7 @@ namespace GUI {
 		if (Is_start_active == false)
 		{
 			mat_card = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
-			Image_Original->Enabled = true;
+			//Image_Original->Enabled = true;
 			button_pauses->Enabled = true;
 			temp = (int)numeric_Objects_Detect->Value;
 			Operation_Deactivate();
@@ -581,6 +582,7 @@ namespace GUI {
 		if (Is_start_active == true)
 		{
 			
+			numeric_Object_Text->Text = "0";
 			obiekt.clear();
 			button_pauses->Enabled = false;
 			Is_Original_active = false;
@@ -670,7 +672,7 @@ namespace GUI {
 				cv::rectangle(mat_img, Area_Rectangular_selected, cv::Scalar(128), 1, 8, 0);
 				Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
 			}
-			if (temp == 0)Image_Original->Enabled = false;
+			//if (temp == 0)Image_Original->Enabled = false;
 			
 			if (Is_Tracking_active)
 			{
