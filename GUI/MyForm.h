@@ -6,10 +6,15 @@
 #include <opencv/cv.hpp>
 #include <vector>
 #include "Obiekt.cpp"
+#include "MyForm_Drawing.h"
+#include <msclr/marshal_cppstd.h>
+#include "Common.h"
 
+cv::Point init;
 
-
-
+int selected_index;
+bool Is_initialized = false;
+std::string video = "0";
 Drawing_Position position;
 int counter = 0;
 cv::VideoCapture capture;
@@ -83,15 +88,19 @@ bool Is_start_active = false;
 bool Is_pause_active = false;
 bool Is_mouse_click_active = false;
 #pragma endregion 
-
 #pragma region Drawing and seelecting area
-cv::Rect Area_Rectangular_selected;
 
+
+
+#pragma region Drawing
+
+
+cv::Rect Area_Rectangular_selected;
 cv::Point Area_Point_begin;
 cv::Point Area_Point_end;
 int Drawing_line_Color_Value = 0;
 cv::Point2i pt(-1, -1);
-#pragma endregion%
+#pragma endregion
 
 #pragma region stale
 const int FRAME_WIDTH = 640;
@@ -116,6 +125,8 @@ namespace GUI {
 	{
 
 	public:
+		 
+
 		MyForm(void)
 		{
 			InitializeComponent();
@@ -153,10 +164,16 @@ namespace GUI {
 	private: System::Windows::Forms::Button^  button_reset;
 	private: System::Windows::Forms::ColorDialog^  Color_Dialog;
 	private: System::Windows::Forms::Label^  numeric_Object_Text;
+	private: System::Windows::Forms::MenuStrip^  Menu_Strip;
+
+	private: System::Windows::Forms::ToolStripMenuItem^  fileToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  openToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  saveAasToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^  exitToolStripMenuItem;
 
 
 
-
+	private:		 MyForm_Drawing^ myForm_Drawing;
 	private: System::ComponentModel::IContainer^  components;
 	private:
 		/// <summary>
@@ -184,7 +201,13 @@ namespace GUI {
 			this->button_reset = (gcnew System::Windows::Forms::Button());
 			this->Color_Dialog = (gcnew System::Windows::Forms::ColorDialog());
 			this->numeric_Object_Text = (gcnew System::Windows::Forms::Label());
+			this->Menu_Strip = (gcnew System::Windows::Forms::MenuStrip());
+			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->openToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->saveAasToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->exitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->Image_Original))->BeginInit();
+			this->Menu_Strip->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// button1
@@ -199,7 +222,7 @@ namespace GUI {
 			// 
 			// button_start
 			// 
-			this->button_start->Location = System::Drawing::Point(-2, 13);
+			this->button_start->Location = System::Drawing::Point(-2, 39);
 			this->button_start->Name = L"button_start";
 			this->button_start->Size = System::Drawing::Size(109, 23);
 			this->button_start->TabIndex = 1;
@@ -235,7 +258,7 @@ namespace GUI {
 			// button_drawing
 			// 
 			this->button_drawing->Enabled = false;
-			this->button_drawing->Location = System::Drawing::Point(-2, 71);
+			this->button_drawing->Location = System::Drawing::Point(-2, 97);
 			this->button_drawing->Name = L"button_drawing";
 			this->button_drawing->Size = System::Drawing::Size(109, 23);
 			this->button_drawing->TabIndex = 6;
@@ -256,7 +279,7 @@ namespace GUI {
 			// button_pauses
 			// 
 			this->button_pauses->Enabled = false;
-			this->button_pauses->Location = System::Drawing::Point(-2, 42);
+			this->button_pauses->Location = System::Drawing::Point(-2, 68);
 			this->button_pauses->Name = L"button_pauses";
 			this->button_pauses->Size = System::Drawing::Size(109, 23);
 			this->button_pauses->TabIndex = 9;
@@ -270,7 +293,7 @@ namespace GUI {
 			// 
 			// button_clear
 			// 
-			this->button_clear->Location = System::Drawing::Point(-2, 100);
+			this->button_clear->Location = System::Drawing::Point(-2, 126);
 			this->button_clear->Name = L"button_clear";
 			this->button_clear->Size = System::Drawing::Size(109, 23);
 			this->button_clear->TabIndex = 10;
@@ -280,7 +303,7 @@ namespace GUI {
 			// 
 			// button_reset
 			// 
-			this->button_reset->Location = System::Drawing::Point(-2, 130);
+			this->button_reset->Location = System::Drawing::Point(-2, 155);
 			this->button_reset->Name = L"button_reset";
 			this->button_reset->Size = System::Drawing::Size(109, 23);
 			this->button_reset->TabIndex = 11;
@@ -307,10 +330,51 @@ namespace GUI {
 			this->numeric_Object_Text->Text = L"0";
 			this->numeric_Object_Text->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
+			// Menu_Strip
+			// 
+			this->Menu_Strip->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->fileToolStripMenuItem });
+			this->Menu_Strip->Location = System::Drawing::Point(0, 0);
+			this->Menu_Strip->Name = L"Menu_Strip";
+			this->Menu_Strip->Size = System::Drawing::Size(767, 24);
+			this->Menu_Strip->TabIndex = 13;
+			this->Menu_Strip->Text = L"menuStrip1";
+			// 
+			// fileToolStripMenuItem
+			// 
+			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {
+				this->openToolStripMenuItem,
+					this->saveAasToolStripMenuItem, this->exitToolStripMenuItem
+			});
+			this->fileToolStripMenuItem->Name = L"fileToolStripMenuItem";
+			this->fileToolStripMenuItem->Size = System::Drawing::Size(37, 20);
+			this->fileToolStripMenuItem->Text = L"File";
+			// 
+			// openToolStripMenuItem
+			// 
+			this->openToolStripMenuItem->Name = L"openToolStripMenuItem";
+			this->openToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->openToolStripMenuItem->Text = L"Open";
+			this->openToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::Menu_Open);
+			// 
+			// saveAasToolStripMenuItem
+			// 
+			this->saveAasToolStripMenuItem->Name = L"saveAasToolStripMenuItem";
+			this->saveAasToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->saveAasToolStripMenuItem->Text = L"Save as";
+			this->saveAasToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::Menu_Save_as);
+			// 
+			// exitToolStripMenuItem
+			// 
+			this->exitToolStripMenuItem->Name = L"exitToolStripMenuItem";
+			this->exitToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->exitToolStripMenuItem->Text = L"Exit";
+			this->exitToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::Menu_Exit);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+			this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
 			this->ClientSize = System::Drawing::Size(767, 493);
 			this->Controls->Add(this->numeric_Object_Text);
 			this->Controls->Add(this->button_reset);
@@ -322,20 +386,25 @@ namespace GUI {
 			this->Controls->Add(this->Image_Original);
 			this->Controls->Add(this->button_start);
 			this->Controls->Add(this->button1);
+			this->Controls->Add(this->Menu_Strip);
+			this->MainMenuStrip = this->Menu_Strip;
 			this->Name = L"MyForm";
-			this->Text = L"MyForm";
+			this->Text = L"Motion Paint";
+			this->Load += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->Image_Original))->EndInit();
+			this->Menu_Strip->ResumeLayout(false);
+			this->Menu_Strip->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
+
+		
 
 		}
 #pragma endregion
 #pragma region Trackbary (Trackbars_Create)
 		static void on_trackbar_blur(int, void*)
 		{//This function gets called whenever a
-			std::cout << "CALL";
-			Trackbars_kernel_size_blur = 2 * Trackbars_parametr_BLUR + 1;
-			Trackbars_sigma_blur = 0.3 *((Trackbars_kernel_size_blur - 1)*0.5 - 1) + 0.8;
+			
 		}
 		void Trackbars_Create()
 		{		
@@ -353,7 +422,7 @@ namespace GUI {
 				//cv::createTrackbar("Diameter scale", "Trackbars", &diameterScale, 10, 0);
 				cv::createTrackbar("Dilate", window_trackbar[i], &obiekt.at(i).dilate, 15, NULL);
 				cv::createTrackbar("Erode", window_trackbar[i], &obiekt.at(i).erode, 15, NULL);
-				//cv::createTrackbar("Line color", "Trackbars", &lineColorValue, 4, NULL);
+				cv::createTrackbar("Gaussian blur", window_trackbar[i],&obiekt.at(i).blur, 21, NULL);
 			}
 		}
 #pragma endregion
@@ -411,12 +480,12 @@ namespace GUI {
 			Is_Contour_active = false;
 		}
 
-		void Operation_filter_Blur(cv::Mat &original) {
-			if (Trackbars_parametr_BLUR < 1)
+		void Operation_filter_Blur(cv::Mat &thresh,int i) {
+			if (obiekt.at(i).blur < 1)
 			{
-				Trackbars_parametr_BLUR = 1;
+				obiekt.at(i).blur = 1;
 			}
-			cv::GaussianBlur(original, original, cv::Size(2*Trackbars_parametr_BLUR+1, 2 * Trackbars_parametr_BLUR + 1), 0.3 *(((2 * Trackbars_parametr_BLUR + 1) - 1)*0.5 - 1) + 0.8);
+			cv::GaussianBlur(thresh, thresh, cv::Size(2* obiekt.at(i).blur+1, 2 * obiekt.at(i).blur + 1), 0.3 *(((2 * obiekt.at(i).blur + 1) - 1)*0.5 - 1) + 0.8);
 		}
 		void Operation_filter_Erode(cv::Mat &thresh, int i) {
 			if (obiekt.at(i).erode < 1)
@@ -440,7 +509,7 @@ namespace GUI {
 		void Operation_filter(cv::Mat &thresh, int i) {
 			Operation_filter_Dilate(thresh, i);
 			Operation_filter_Erode(thresh, i);
-			//Operation_filter_Blur(thresh, i);
+			Operation_filter_Blur(thresh, i);
 		}
 
 #pragma endregion
@@ -459,12 +528,10 @@ namespace GUI {
 
 				if (obiekt.at(i).getRectangle_tracked().boundingRect().contains(cv::Point2i(X, Y)))
 				{
-					ColorDialog^ colordialog = gcnew ColorDialog;
-					colordialog->AllowFullOpen = true;
-					colordialog->ShowHelp = true;
-					colordialog->ShowDialog();
-					Color clr = colordialog->Color;
-					obiekt.at(i).setColor(cv::Scalar(clr.R, clr.G, clr.B));
+					selected_index = i;
+					myForm_Drawing->Show();
+					
+					//if(myForm_Drawing.)				
 				}
 
 			}
@@ -554,14 +621,14 @@ namespace GUI {
 		
 	//	MyDialog->Color = textBox1->ForeColor;
 
-		Trackbars_Create();
+		//Trackbars_Create();
 	
 		if (Is_start_active == false)
 		{
 			mat_card = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
 			//Image_Original->Enabled = true;
 			button_pauses->Enabled = true;
-			temp = (int)numeric_Objects_Detect->Value;
+			//temp = (int)numeric_Objects_Detect->Value;
 			Operation_Deactivate();
 			Is_Original_active = true;
 			button_start->Text = "STOP";
@@ -570,7 +637,9 @@ namespace GUI {
 			capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
 			capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 			Operation_Deactivate();
-		    capture = cv::VideoCapture(0);
+			if(video=="0")capture = cv::VideoCapture(0);
+			else capture = cv::VideoCapture(video);
+		    
 			//capture = cv::VideoCapture(0);
 			Image_Original->Show();	
 			obiekt.clear();
@@ -581,7 +650,7 @@ namespace GUI {
 		}
 		if (Is_start_active == true)
 		{
-			
+			//video = "0";
 			numeric_Object_Text->Text = "0";
 			obiekt.clear();
 			button_pauses->Enabled = false;
@@ -654,8 +723,8 @@ namespace GUI {
 		capture >> mat_frame;
 		flip(mat_frame, mat_frame, 1);
 		mat_frame.copyTo(mat_img);
-		Operation_filter_Blur(mat_frame);
-		cv::imshow(window_blur, mat_frame);
+		//Operation_filter_Blur(mat_frame);
+		//cv::imshow(window_blur, mat_frame);
 		if (Is_Original_active)
 		{
 			cv::cvtColor(mat_frame, mat_hsv, cv::COLOR_BGR2HSV);
@@ -724,24 +793,80 @@ namespace GUI {
 					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);		
 				    obiekt.at(i).mat_backproj &= obiekt.at(i).mat_contour;
 				    obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
-					, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 1)));
+					, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 5)));
 				    obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
 					if (obiekt.at(i).getRectangle_tracked().boundingRect().area()>=30)
 					{
 
-						
-						cv::circle(mat_img, obiekt.at(i).getRectangle_tracked().center, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+					
+						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
 						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i * 40, i * 40, i * 40), 4, cv::LINE_8);//Tracking point
 						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
 						cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
 						if (Is_Drawing_active == true)
 						{
-							Drawing_Radius_move(obiekt.at(i).position, 1, 1);
-							cv::line(mat_card, obiekt.at(i).position.point,obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getTracking_Points().r/2);					
+							if (obiekt.at(i).getIs_drawing_circle_active()==true)std::cout << "Drawing circle active";
+							if (obiekt.at(i).getIs_drawing_rectangle_active() == true)
+							{
+								if (Is_initialized == false)
+								{
+									init = obiekt.at(i).getTracking_Points().point;
+									Is_initialized = true;
+								}
+								Area_Rectangular_selected.x = MIN(obiekt.at(i).getRectangle_tracked().center.x, init.x);
+								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y,init.y);
+								Area_Rectangular_selected.width = std::abs(obiekt.at(i).getRectangle_tracked().center.x - init.x);
+								Area_Rectangular_selected.height = std::abs(obiekt.at(i).getRectangle_tracked().center.y - init.y);
+								cv::rectangle(mat_card, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
+								Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+							}
+							if (obiekt.at(i).getIs_drawing_circle_active() == true)
+							{
+								if (Is_initialized == false)
+								{
+								    init = obiekt.at(i).getTracking_Points().point;
+									Is_initialized = true;
+								}
+								Area_Rectangular_selected.x = MIN(obiekt.at(i).getRectangle_tracked().center.x, 0);
+								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y, 0);
+								Area_Rectangular_selected.width = std::abs(obiekt.at(i).getRectangle_tracked().center.x - 0);
+								Area_Rectangular_selected.height = std::abs(obiekt.at(i).getRectangle_tracked().center.y - 0);
+								//cv::ellipse(mat_img, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
+								Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+							}
+							if (obiekt.at(i).getIs_drawing_line_active() == true)
+							{
+								if (Is_initialized == false)
+								{
+								    init = obiekt.at(i).getTracking_Points().point;
+									Is_initialized = true;
+							
+								}
+								cv::Mat mat_card_temp=cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
+								cv::line(mat_card, init, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 0);
+								cv::addWeighted(mat_card, 1, mat_card_temp, 0.5, 0.5, mat_card);
+								//obiekt.at(i).position = obiekt.at(i).getTracking_Points();
+								//Drawing_Radius_move(obiekt.at(i).position, 2, 2);
+							}
+							if (obiekt.at(i).getIs_drawing_Pencil_active() == true)
+							{	
+								cv::Mat mat_card_temp = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
+								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i * 40, i * 40, i * 40), 4, cv::LINE_8);//Tracking point
+								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+								cv::line(mat_card, obiekt.at(i).position.point, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(),obiekt.at(i).getLine_thickness(),obiekt.at(i).getTracking_Points().r / 2);
+								obiekt.at(i).position = obiekt.at(i).getTracking_Points();
+								//Drawing_Radius_move(obiekt.at(i).position, 2, 2);
+								cv::addWeighted(mat_card, 0.9, mat_card_temp, 0.9, 0.1, mat_card);
+								cv::imshow(window_card[1], mat_card_temp);
+							}	
 						}
-						obiekt.at(i).position = obiekt.at(i).getTracking_Points();
+						else { Is_initialized = false; }
+						
+					
 							//= 
 					}
+					
 				cv::imshow(window_card[0], mat_card);
 			    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
 				cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
@@ -786,5 +911,58 @@ namespace GUI {
 
 
 
+private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
+	this->myForm_Drawing = gcnew MyForm_Drawing();
+}
+	private: System::Void Menu_Open(System::Object^  sender, System::EventArgs^  e) {
+		// Displays an OpenFileDialog so the user can select a Cursor.  
+		OpenFileDialog ^ ofd = gcnew OpenFileDialog();
+		ofd->Filter = "Video files|*.mp4";
+		ofd->Title = "Select a Video File";
+
+		// Show the Dialog.  
+		// If the user clicked OK in the dialog and  
+		// a .CUR file was selected, open it.  
+		if (ofd->ShowDialog() == System::Windows::Forms::DialogResult::OK)
+		{
+			// Assign the cursor in the Stream to  
+			// the Form's Cursor property.  
+			//String ^onlyFileName = System::IO::Path::GetFileName(ofd->FileName);
+			
+			String ^onlyFileName = System::IO::Path::GetFullPath(ofd->FileName);
+			video = msclr::interop::marshal_as< std::string >(onlyFileName);
+			//Is_start_active = true;
+			button_start->PerformClick();
+			button_start->PerformClick();
+
+
+			
+			
+
+		}
+	}
+
+private: System::Void Menu_Save_as(System::Object^  sender, System::EventArgs^  e) 
+{
+	// Displays a SaveFileDialog so the user can save the Image  
+	// assigned to Button2.  
+	System::Windows::Forms::SaveFileDialog ^ saveFileDialog1 = gcnew SaveFileDialog();
+
+	saveFileDialog1->Filter =
+		"Images|*.jpg";
+	saveFileDialog1->Title = "Save an Image File";
+	   System::Drawing::Imaging::ImageFormat ^format = System::Drawing::Imaging::ImageFormat::Png;
+	   format = System::Drawing::Imaging::ImageFormat::Jpeg;
+	//	System:IO::Stream^ myStream;
+		if (saveFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
+		{	
+			Image_Original->Image->Save(saveFileDialog1->ToString(), format);
+		}	
+
+	
+}
+private: System::Void Menu_Exit(System::Object^  sender, System::EventArgs^  e) {
+	Application::Exit();
+}
 };
 }

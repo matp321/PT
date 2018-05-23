@@ -33,6 +33,14 @@ public:
 	cv::Mat mat_contour;
 	cv::Mat mat_backproj;
 	Drawing_Position position;
+	
+	void deactivate_drawing()
+	{
+		this->Is_drawing_Pencil_active = false;
+		this->Is_drawing_rectangle_active = false;
+		this->Is_drawing_circle_active = false;
+		this->Is_drawing_line_active = false;
+	}
 	Obiekt(cv::Rect rectangle,int Hmin,int Hmax,cv::Mat histogram)
 	{
 		this->rectangle = rectangle;
@@ -43,6 +51,11 @@ public:
 		this->erode = 7;
 		this->dilate = 1;
 		this->blur = 2;
+		bool Is_drawing_Pencil_active = false;
+		bool Is_drawing_rectangle_active = false;
+		bool Is_drawing_circle_active = false;
+		bool Is_drawing_line_active = false;
+		int line_thickness = 1;
 
 	}
 	void setMat_backproj(cv::Mat mat_backproj) { this->mat_backproj = mat_backproj; }
@@ -79,6 +92,18 @@ public:
 	}
 	void setColor(cv::Scalar color) { this->color = color; }
 	cv::Scalar getColor() { return this->color; }
+	void setIs_drawing_Pencil_active(bool Is_drawing_Pencil_active) { this->Is_drawing_Pencil_active = Is_drawing_Pencil_active; }
+	bool getIs_drawing_Pencil_active() { return this->Is_drawing_Pencil_active; }
+	void setIs_drawing_rectangle_active(bool Is_drawing_rectangle_active) { this->Is_drawing_rectangle_active = Is_drawing_rectangle_active; }
+	bool getIs_drawing_rectangle_active() { return this->Is_drawing_rectangle_active; }
+	void setIs_drawing_circle_active(bool Is_drawing_circle_active) { this->Is_drawing_circle_active = Is_drawing_circle_active; }
+	bool getIs_drawing_circle_active() { return this->Is_drawing_circle_active; }
+	void setIs_drawing_line_active(bool Is_drawing_line_active) { this->Is_drawing_line_active = Is_drawing_line_active; }
+	bool getIs_drawing_line_active() { return this->Is_drawing_line_active; }
+	void setLine_thickness(int line_thickness) { this->line_thickness = line_thickness; }
+	int getLine_thickness() { return this->line_thickness; }
+
+
 
 private:
 
@@ -86,4 +111,9 @@ private:
 	cv::RotatedRect rectangle_tracked;
 	Drawing_Position Tracking_Points;
 	cv::Scalar color;
+	bool Is_drawing_Pencil_active = false;
+	bool Is_drawing_rectangle_active = false;
+	bool Is_drawing_circle_active = false;
+	bool Is_drawing_line_active = false;
+	int line_thickness;
 };

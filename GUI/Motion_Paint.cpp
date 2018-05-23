@@ -1,5 +1,5 @@
 #include "MyForm.h"
-
+#include "MyForm_Drawing.h"
 using namespace GUI;
 using namespace System::Windows::Forms;
 using namespace std;
@@ -8,6 +8,7 @@ using namespace std;
 #include <opencv/cv.hpp>
 #include <iostream>
 #include <string>
+
 
 //INIT
 //INIT2
@@ -22,5 +23,6 @@ int main()
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false);
 	Application::Run(gcnew MyForm());
+
 	return 0;
 }
