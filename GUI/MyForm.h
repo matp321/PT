@@ -12,6 +12,10 @@
 
 cv::Point init;
 
+cv::Mat mat_card_temp;
+int alpha = 0;
+int beta = 10;
+int gamma = 0;
 int selected_index;
 bool Is_initialized = false;
 std::string video = "0";
@@ -423,6 +427,9 @@ namespace GUI {
 				cv::createTrackbar("Dilate", window_trackbar[i], &obiekt.at(i).dilate, 15, NULL);
 				cv::createTrackbar("Erode", window_trackbar[i], &obiekt.at(i).erode, 15, NULL);
 				cv::createTrackbar("Gaussian blur", window_trackbar[i],&obiekt.at(i).blur, 21, NULL);
+				cv::createTrackbar("alpha", window_trackbar[i], &alpha, 10, NULL);
+				cv::createTrackbar("beta", window_trackbar[i], &beta, 10, NULL);
+				cv::createTrackbar("gamma", window_trackbar[i], &gamma, 10, NULL);
 			}
 		}
 #pragma endregion
@@ -529,7 +536,8 @@ namespace GUI {
 				if (obiekt.at(i).getRectangle_tracked().boundingRect().contains(cv::Point2i(X, Y)))
 				{
 					selected_index = i;
-					myForm_Drawing->Show();
+					std::cout << "selected index" << selected_index << "\n";
+					
 					
 					//if(myForm_Drawing.)				
 				}
@@ -587,11 +595,14 @@ namespace GUI {
 		std::cout << "CHeck";
 		Operation_Deactivate();
 	//	Image_Original->Enabled = true;
+		video = "0";
 		obiekt.clear();
 	}
 	private: System::Void Button_Clear_Card(System::Object^  sender, System::EventArgs^  e)
 	{
 		mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255,0));
+		std::cout << "mat_frame.rows" << mat_frame.rows << "\n";
+		std::cout << "mat_frame.cols" << mat_frame.cols << "\n";
 	}
 	private: System::Void Button_Pause(System::Object^  sender, System::EventArgs^  e)
 	{
@@ -625,7 +636,8 @@ namespace GUI {
 	
 		if (Is_start_active == false)
 		{
-			mat_card = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
+			
+			mat_card = cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255,0));
 			//Image_Original->Enabled = true;
 			button_pauses->Enabled = true;
 			//temp = (int)numeric_Objects_Detect->Value;
@@ -698,13 +710,14 @@ namespace GUI {
 	private: System::Void Button_Drawing_Start_Stop(System::Object^  sender, System::EventArgs^  e)
 	{
 		if (Is_Drawing_active) {
-
-			cv::destroyWindow(window_card[0]);
+			//myForm_Drawing->Hide();
+			//cv::destroyWindow(window_card[0]);
 			Is_Drawing_active = false; 
 			button_drawing->Text = "Start drawing"; return;
 		}
 
 		if (Is_Drawing_active == false) {
+			saveAasToolStripMenuItem->Enabled = true;
 			std::cout << "Drawing_is active";
 			Is_Drawing_active = true;
 			button_drawing->Text = "Stop drawing"; return;
@@ -715,6 +728,7 @@ namespace GUI {
 #pragma region Real time capture(Timer_motion)
 	private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e)
 	{
+		
 		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
 		Int32 X = Cursor->Position.X - P.X;
 		Int32 Y = Cursor->Position.Y - P.Y;
@@ -723,6 +737,7 @@ namespace GUI {
 		capture >> mat_frame;
 		flip(mat_frame, mat_frame, 1);
 		mat_frame.copyTo(mat_img);
+		mat_card_temp = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255, 0));
 		//Operation_filter_Blur(mat_frame);
 		//cv::imshow(window_blur, mat_frame);
 		if (Is_Original_active)
@@ -805,35 +820,26 @@ namespace GUI {
 						cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
 						if (Is_Drawing_active == true)
 						{
-							if (obiekt.at(i).getIs_drawing_circle_active()==true)std::cout << "Drawing circle active";
+							
 							if (obiekt.at(i).getIs_drawing_rectangle_active() == true)
 							{
+								std::cout << "Rectangle";
 								if (Is_initialized == false)
 								{
 									init = obiekt.at(i).getTracking_Points().point;
 									Is_initialized = true;
 								}
+								cv::Mat mat_card_temp_rectangle = cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255, 0));
 								Area_Rectangular_selected.x = MIN(obiekt.at(i).getRectangle_tracked().center.x, init.x);
 								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y,init.y);
 								Area_Rectangular_selected.width = std::abs(obiekt.at(i).getRectangle_tracked().center.x - init.x);
 								Area_Rectangular_selected.height = std::abs(obiekt.at(i).getRectangle_tracked().center.y - init.y);
-								cv::rectangle(mat_card, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
-								Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+								cv::rectangle(mat_card_temp_rectangle, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
+								cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_rectangle, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
+							//	Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+
 							}
-							if (obiekt.at(i).getIs_drawing_circle_active() == true)
-							{
-								if (Is_initialized == false)
-								{
-								    init = obiekt.at(i).getTracking_Points().point;
-									Is_initialized = true;
-								}
-								Area_Rectangular_selected.x = MIN(obiekt.at(i).getRectangle_tracked().center.x, 0);
-								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y, 0);
-								Area_Rectangular_selected.width = std::abs(obiekt.at(i).getRectangle_tracked().center.x - 0);
-								Area_Rectangular_selected.height = std::abs(obiekt.at(i).getRectangle_tracked().center.y - 0);
-								//cv::ellipse(mat_img, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
-								Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
-							}
+			
 							if (obiekt.at(i).getIs_drawing_line_active() == true)
 							{
 								if (Is_initialized == false)
@@ -842,25 +848,32 @@ namespace GUI {
 									Is_initialized = true;
 							
 								}
-								cv::Mat mat_card_temp=cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
-								cv::line(mat_card, init, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 0);
-								cv::addWeighted(mat_card, 1, mat_card_temp, 0.5, 0.5, mat_card);
+								cv::Mat mat_card_temp_line=cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255, 0));
+								cv::line(mat_card_temp_line, init, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 0);
+								cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_line, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
+								//cv::addWeighted(mat_card, 1, mat_card_temp_line, 0.9, 0.1, mat_card);
+								//cv::imshow(window_card[1], mat_card_temp_line);
 								//obiekt.at(i).position = obiekt.at(i).getTracking_Points();
 								//Drawing_Radius_move(obiekt.at(i).position, 2, 2);
 							}
 							if (obiekt.at(i).getIs_drawing_Pencil_active() == true)
 							{	
-								cv::Mat mat_card_temp = cv::Mat(480, 640, CV_8UC4, cv::Scalar(255, 255, 255, 0));
-								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
-								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i * 40, i * 40, i * 40), 4, cv::LINE_8);//Tracking point
-								cv::circle(mat_card_temp, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
+						
+								
+							  
 								cv::line(mat_card, obiekt.at(i).position.point, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(),obiekt.at(i).getLine_thickness(),obiekt.at(i).getTracking_Points().r / 2);
 								obiekt.at(i).position = obiekt.at(i).getTracking_Points();
-								//Drawing_Radius_move(obiekt.at(i).position, 2, 2);
-								cv::addWeighted(mat_card, 0.9, mat_card_temp, 0.9, 0.1, mat_card);
-								cv::imshow(window_card[1], mat_card_temp);
+								Drawing_Radius_move(obiekt.at(i).position, 2, 2);
+							//cv::addWeighted(mat_card, double((double)alpha / 10), mat_img, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
+							//	cv::addWeighted(mat_img, 1, mat_card, 0.9, 0.1, mat_img);
+								
+							//mat_card = mat_card_temp;
+							//	cv::addWeighted(mat_card, 1, mat_card, 0.9, 0.1, mat_img);
 							}	
+							//
+							
 						}
+						
 						else { Is_initialized = false; }
 						
 					
@@ -868,6 +881,7 @@ namespace GUI {
 					}
 					
 				cv::imshow(window_card[0], mat_card);
+
 			    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
 				cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
 				}
@@ -913,6 +927,8 @@ namespace GUI {
 
 private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
 	this->myForm_Drawing = gcnew MyForm_Drawing();
+	this->saveAasToolStripMenuItem->Enabled = false;
+	myForm_Drawing->Show();
 }
 	private: System::Void Menu_Open(System::Object^  sender, System::EventArgs^  e) {
 		// Displays an OpenFileDialog so the user can select a Cursor.  
@@ -956,7 +972,10 @@ private: System::Void Menu_Save_as(System::Object^  sender, System::EventArgs^  
 	//	System:IO::Stream^ myStream;
 		if (saveFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{	
-			Image_Original->Image->Save(saveFileDialog1->ToString(), format);
+			String ^onlyFileName = System::IO::Path::GetFullPath(saveFileDialog1->FileName);
+			video = msclr::interop::marshal_as< std::string >(onlyFileName);
+			std::cout << "video:" << video;
+			cv::imwrite(video, mat_card);
 		}	
 
 	
