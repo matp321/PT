@@ -45,20 +45,20 @@ std::vector<Obiekt>obiekt;
 int temp;
 
 int j = 0;
-std::string window_trackbar_blur = {" Trackbar Blur"};
+std::string window_trackbar_blur = { " Trackbar Blur" };
 std::string window_blur = { "Blur" };
 std::string window_trackbar[] = { "Trackbar 1", "Trackbar 2","Trackbar 3","Trackbar 4","Trackbar 5" };
-std::string window_histogram[] = {"Histogram1", "Histogram2","Histogram3","Histogram4"};
-std::string window_contour[] = {"Contour1", "Contour2","Contour3","Contour4","Contour 5"};
+std::string window_histogram[] = { "Histogram1", "Histogram2","Histogram3","Histogram4" };
+std::string window_contour[] = { "Contour1", "Contour2","Contour3","Contour4","Contour 5" };
 std::string window_contour_roi[] = { "Contour_roi_1", "Contour_roi_2","Contour_roi_3","Contour_roi_4" };
 std::string window_calback_proj[] = { "Callback_1", "Callback_2","Callback_3","Callback_4" };
-std::string window_card[] = { "card1", "card2","card3","card4","card5"};
+std::string window_card[] = { "card1", "card2","card3","card4","card5" };
 
 //double h_min_range = 0;
 //double h_max_range = 360;
 
 
-cv::String object_number[] = { "1","2","3","4","5"};
+cv::String object_number[] = { "1","2","3","4","5" };
 const cv::String *names_pointer = object_number;
 
 
@@ -131,7 +131,7 @@ namespace GUI {
 	{
 
 	public:
-		 
+
 
 		MyForm(void)
 		{
@@ -403,19 +403,19 @@ namespace GUI {
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
-		
+
 
 		}
 #pragma endregion
 #pragma region Trackbary (Trackbars_Create)
 		static void on_trackbar_blur(int, void*)
 		{//This function gets called whenever a
-			
+
 		}
 		void Trackbars_Create()
-		{		
-				cv::namedWindow(window_trackbar_blur, 0);
-				cv::createTrackbar("Gaussian blur(Orginal Image)", window_trackbar_blur, &Trackbars_parametr_BLUR, 21,NULL);
+		{
+			cv::namedWindow(window_trackbar_blur, 0);
+			cv::createTrackbar("Gaussian blur(Orginal Image)", window_trackbar_blur, &Trackbars_parametr_BLUR, 21, NULL);
 		}
 		void Trackbars_Create(int size)
 		{
@@ -428,7 +428,7 @@ namespace GUI {
 				//cv::createTrackbar("Diameter scale", "Trackbars", &diameterScale, 10, 0);
 				cv::createTrackbar("Dilate", window_trackbar[i], &obiekt.at(i).dilate, 15, NULL);
 				cv::createTrackbar("Erode", window_trackbar[i], &obiekt.at(i).erode, 15, NULL);
-				cv::createTrackbar("Gaussian blur", window_trackbar[i],&obiekt.at(i).blur, 21, NULL);
+				cv::createTrackbar("Gaussian blur", window_trackbar[i], &obiekt.at(i).blur, 21, NULL);
 				cv::createTrackbar("alpha", window_trackbar[i], &alpha, 10, NULL);
 				cv::createTrackbar("beta", window_trackbar[i], &beta, 10, NULL);
 				cv::createTrackbar("gamma", window_trackbar[i], &gamma, 10, NULL);
@@ -489,12 +489,12 @@ namespace GUI {
 			Is_Contour_active = false;
 		}
 
-		void Operation_filter_Blur(cv::Mat &thresh,int i) {
+		void Operation_filter_Blur(cv::Mat &thresh, int i) {
 			if (obiekt.at(i).blur < 1)
 			{
 				obiekt.at(i).blur = 1;
 			}
-			cv::GaussianBlur(thresh, thresh, cv::Size(2* obiekt.at(i).blur+1, 2 * obiekt.at(i).blur + 1), 0.3 *(((2 * obiekt.at(i).blur + 1) - 1)*0.5 - 1) + 0.8);
+			cv::GaussianBlur(thresh, thresh, cv::Size(2 * obiekt.at(i).blur + 1, 2 * obiekt.at(i).blur + 1), 0.3 *(((2 * obiekt.at(i).blur + 1) - 1)*0.5 - 1) + 0.8);
 		}
 		void Operation_filter_Erode(cv::Mat &thresh, int i) {
 			if (obiekt.at(i).erode < 1)
@@ -525,7 +525,7 @@ namespace GUI {
 #pragma region mouse actions (Mouse_)
 	private: System::Void Mouse_Down_Image_Original(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e)
 	{
-		
+
 		if (e->Button == System::Windows::Forms::MouseButtons::Right)
 		{
 			std::cout << "Mouse_Down_EVENT right" << "\n";
@@ -539,9 +539,10 @@ namespace GUI {
 				{
 					selected_index = i;
 					std::cout << "selected index" << selected_index << "\n";
+					myForm_Drawing->Label_Object_Selected->Text = (selected_index+1).ToString();
 					return;
-					
-					
+
+
 					//if(myForm_Drawing.)				
 				}
 
@@ -567,7 +568,7 @@ namespace GUI {
 	{
 		if (e->Button == System::Windows::Forms::MouseButtons::Left)
 		{
-		
+
 			std::cout << "Mouse_Up event left" << "\n";
 			Is_Drawing_area_being_selected = false;
 			//if (Is_Original_active == true)
@@ -587,23 +588,23 @@ namespace GUI {
 				button_drawing->Enabled = true;
 				Is_Drawing_active = false;
 				std::cout << "Mouse check";
-				numeric_Object_Text->Text = (obiekt.size()+1).ToString();
+				numeric_Object_Text->Text = (obiekt.size() + 1).ToString();
 			}
 		}
 	}
 #pragma endregion
 #pragma region Button actions (Button_*)
-	private: System::Void Button_Reset(System::Object^  sender, System::EventArgs^  e) 
-		{
+	private: System::Void Button_Reset(System::Object^  sender, System::EventArgs^  e)
+	{
 		std::cout << "CHeck";
 		Operation_Deactivate();
-	//	Image_Original->Enabled = true;
+		//	Image_Original->Enabled = true;
 		video = "0";
 		obiekt.clear();
 	}
 	private: System::Void Button_Clear_Card(System::Object^  sender, System::EventArgs^  e)
 	{
-		mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255,0));
+		mat_card = cv::Mat(mat_frame.rows, mat_frame.cols, CV_8UC3, cv::Scalar(255, 255, 255, 0));
 		std::cout << "mat_frame.rows" << mat_frame.rows << "\n";
 		std::cout << "mat_frame.cols" << mat_frame.cols << "\n";
 	}
@@ -622,7 +623,7 @@ namespace GUI {
 		{
 			Is_pause_active = true;
 			//Operation_Deactivate();
-			
+
 			//Timer_Capture->Stop();
 			//Timer_Capture_pause->Start();
 			cv::imshow("CONTOUR", mat_img);
@@ -632,11 +633,11 @@ namespace GUI {
 	}
 	private: System::Void Button_Video_Start(System::Object^  sender, System::EventArgs^  e)
 	{
-		
-	//	MyDialog->Color = textBox1->ForeColor;
+
+		//	MyDialog->Color = textBox1->ForeColor;
 
 		//Trackbars_Create();
-	
+
 		if (Is_start_active == false)
 
 		{
@@ -653,15 +654,15 @@ namespace GUI {
 			capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
 			capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 			Operation_Deactivate();
-			if(video=="0")capture = cv::VideoCapture(0);
+			if (video == "0")capture = cv::VideoCapture(0);
 			else capture = cv::VideoCapture(video);
-		    
+
 			//capture = cv::VideoCapture(0);
-			Image_Original->Show();	
+			Image_Original->Show();
 			obiekt.clear();
 			Timer_Capture->Start();
-			
-		
+
+
 			return;
 		}
 		if (Is_start_active == true)
@@ -716,7 +717,7 @@ namespace GUI {
 		if (Is_Drawing_active) {
 			//myForm_Drawing->Hide();
 			//cv::destroyWindow(window_card[0]);
-			Is_Drawing_active = false; 
+			Is_Drawing_active = false;
 			button_drawing->Text = "Start drawing"; return;
 		}
 
@@ -726,7 +727,7 @@ namespace GUI {
 			std::cout << "Drawing_is active";
 			Is_Drawing_active = true;
 			button_drawing->Text = "Stop drawing"; return;
-			
+
 		}
 
 	}
@@ -734,7 +735,7 @@ namespace GUI {
 #pragma region Real time capture(Timer_motion)
 	private: System::Void Timer_motion(System::Object^  sender, System::EventArgs^  e)
 	{
-		
+
 		Point P = PointToScreen(Point(Image_Original->Bounds.Left, Image_Original->Bounds.Top));
 		Int32 X = Cursor->Position.X - P.X;
 		Int32 Y = Cursor->Position.Y - P.Y;
@@ -751,8 +752,8 @@ namespace GUI {
 			cv::cvtColor(mat_frame, mat_hsv, cv::COLOR_BGR2HSV);
 			cv::split(mat_hsv, mat_hsv_split);
 			int ch[] = { 0, 0 };
-			cv::mixChannels(&mat_hsv, 1, &mat_hsv_split[0], 1, ch, 1);	
-		
+			cv::mixChannels(&mat_hsv, 1, &mat_hsv_split[0], 1, ch, 1);
+
 			if (Is_Drawing_area_being_selected)
 			{
 				Area_Rectangular_selected.x = MIN(X, Area_Point_begin.x);
@@ -763,23 +764,23 @@ namespace GUI {
 				Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
 			}
 			//if (temp == 0)Image_Original->Enabled = false;
-			
+
 			if (Is_Tracking_active)
 			{
 				if (Is_Tracking_active < 0)
 				{
 					cv::Mat mat_histogram_temp;
-					
 
-					cv::Mat mat_roi_H=cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
+
+					cv::Mat mat_roi_H = cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
 					cv::minMaxLoc(mat_roi_H, &h_min_range, &h_max_range, nullptr, nullptr);
 					std::cout << "H_min_range" << h_min_range << "\n";
 					std::cout << "H_max_range" << h_max_range << "\n";
 					cv::inRange(mat_hsv_split[0], h_min_range, h_max_range, mat_contour);
-					cv::Mat mat_roi_Contour=cv::Mat(mat_contour, Area_Rectangular_selected);//p
-					//cv::Mat mat_roi_H = cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
-					//Trackbars_parametr_H_MIN = h_min_range;
-					//Trackbars_parametr_H_MAX = h_max_range;
+					cv::Mat mat_roi_Contour = cv::Mat(mat_contour, Area_Rectangular_selected);//p
+																							  //cv::Mat mat_roi_H = cv::Mat(mat_hsv_split[0], Area_Rectangular_selected);
+																							  //Trackbars_parametr_H_MIN = h_min_range;
+																							  //Trackbars_parametr_H_MAX = h_max_range;
 					calcHist(&mat_roi_H, 1, 0, mat_roi_Contour, mat_histogram_temp, 1, &histogram_Size, &histogram_pointer_Zasieg);
 					std::cout << "histogram_pointer_Zasieg[0];" << histogram_pointer_Zasieg[0] << "\n";
 					std::cout << "histogram_pointer_Zasieg[1];" << histogram_pointer_Zasieg[1] << "\n";
@@ -789,10 +790,10 @@ namespace GUI {
 					mat_histogram_picture = cv::Scalar::all(0);
 					int binW = mat_histogram_picture.cols / histogram_Size;
 					cv::Mat buffor(1, histogram_Size, CV_8UC3);
-	
-					for (int y = 0; y < histogram_Size; y++) 
+
+					for (int y = 0; y < histogram_Size; y++)
 					{
-						buffor.at<cv::Vec3b>(y) = cv::Vec3b(cv::saturate_cast<uchar>(y * 180/ histogram_Size), 255, 255);
+						buffor.at<cv::Vec3b>(y) = cv::Vec3b(cv::saturate_cast<uchar>(y * 180 / histogram_Size), 255, 255);
 					}
 					cvtColor(buffor, buffor, cv::COLOR_HSV2BGR);
 					for (int x = 0; x < histogram_Size; x++) {
@@ -800,33 +801,34 @@ namespace GUI {
 						cv::rectangle(mat_histogram_picture, cv::Point(x * binW, mat_histogram_picture.rows),
 							cv::Point((x + 1) * binW, mat_histogram_picture.rows - val), cv::Scalar(buffor.at<cv::Vec3b>(x)), -1, 8);
 					}
-					
+
 					obiekt.push_back(Obiekt(Area_Rectangular_selected, (int)h_min_range, (int)h_max_range, mat_histogram_temp));
-					cv::imshow(window_histogram[obiekt.size()-1], mat_histogram_picture);
-				
+					//cv::imshow(window_histogram[obiekt.size() - 1], mat_histogram_picture);
+
 					Trackbars_Create(obiekt.size());
-				
-				}			
+
+				}
 				for (int i = 0; i < obiekt.size(); i++)
 				{
 					cv::inRange(mat_hsv_split[0], obiekt.at(i).Hmin, obiekt.at(i).Hmax, obiekt.at(i).mat_contour);
 					Operation_filter(obiekt.at(i).mat_contour, i);
-					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);		
-				    obiekt.at(i).mat_backproj &= obiekt.at(i).mat_contour;
-				    obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
-					, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 5)));
-				    obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
-					if (obiekt.at(i).getRectangle_tracked().boundingRect().area()>=30)
+					cv::calcBackProject(&mat_hsv_split[0], 1, 0, obiekt.at(i).gethistogram(), obiekt.at(i).mat_backproj, &histogram_pointer_Zasieg);
+					obiekt.at(i).mat_backproj &= obiekt.at(i).mat_contour;
+					obiekt.at(i).setRectangle_tracked(cv::CamShift(obiekt.at(i).mat_backproj, obiekt.at(i).rectangle
+						, cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 10, 5)));
+					obiekt.at(i).setTracking_Points(Drawing_Position(obiekt.at(i).getRectangle_tracked().center, Drawing_Radius_get(obiekt.at(i).getRectangle_tracked().size.width, obiekt.at(i).getRectangle_tracked().size.height)));
+					if (obiekt.at(i).getRectangle_tracked().boundingRect().area() >= 30)
 					{
 
-					
+						cv::Mat mat_card_temp = cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255));
 						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 20, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
 						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 10, cv::Scalar(i * 40, i * 40, i * 40), 4, cv::LINE_8);//Tracking point
 						cv::circle(mat_img, obiekt.at(i).getTracking_Points().point, 5, cv::Scalar(i * 40, 0, 0), 4, cv::LINE_8);//Tracking point
 						cv::putText(mat_img, names_pointer[i], obiekt.at(i).getTracking_Points().point, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar::all(255), 2, 8);
+						cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
 						if (Is_Drawing_active == true)
 						{
-							
+
 							if (obiekt.at(i).getIs_drawing_rectangle_active() == true)
 							{
 								std::cout << "Rectangle";
@@ -837,64 +839,64 @@ namespace GUI {
 								}
 								cv::Mat mat_card_temp_rectangle = cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255));
 								Area_Rectangular_selected.x = MIN(obiekt.at(i).getRectangle_tracked().center.x, init.x);
-								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y,init.y);
+								Area_Rectangular_selected.y = MIN(obiekt.at(i).getRectangle_tracked().center.y, init.y);
 								Area_Rectangular_selected.width = std::abs(obiekt.at(i).getRectangle_tracked().center.x - init.x);
 								Area_Rectangular_selected.height = std::abs(obiekt.at(i).getRectangle_tracked().center.y - init.y);
-								cv::rectangle(mat_card_temp_rectangle, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 8, 0);
-								cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_rectangle, (double)beta / (double)10, ((double)gamma / (double)10), mat_card_temp_rectangle);
-								Is_rectangle_drawn = true;
-							//	Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
+								cv::rectangle(mat_card_temp_rectangle, Area_Rectangular_selected, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 4, 0);
+								//Is_rectangle_drawn = true;
+							    Area_Rectangular_selected &= cv::Rect(0, 0, mat_img.cols, mat_img.rows);//tworzenie prostokata
 
 							}
-			
+							
 							if (obiekt.at(i).getIs_drawing_line_active() == true)
 							{
 								if (Is_initialized == false)
 								{
-								    init = obiekt.at(i).getTracking_Points().point;
+									init = obiekt.at(i).getTracking_Points().point;
 									Is_initialized = true;
-							
+
 								}
-								cv::Mat mat_card_temp_line=cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255, 0));
+								cv::Mat mat_card_temp_line = cv::Mat(480, 640, CV_8UC3, cv::Scalar(255, 255, 255, 0));
 								cv::line(mat_card_temp_line, init, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), 0);
-								//cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_line, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
+								cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_line, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
 								//Area_Point_begin = obiekt.at(i).getTracking_Points();
-							
+
 							}
 							if (obiekt.at(i).getIs_drawing_Pencil_active() == true)
-							{	
-						
-								
-							  
-								cv::line(mat_card, obiekt.at(i).position.point, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(),obiekt.at(i).getLine_thickness(),obiekt.at(i).getTracking_Points().r / 2);
+							{
+
+
+
+								cv::line(mat_card, obiekt.at(i).position.point, obiekt.at(i).getTracking_Points().point, obiekt.at(i).getColor(), obiekt.at(i).getLine_thickness(), obiekt.at(i).getTracking_Points().r / 2);
 								obiekt.at(i).position = obiekt.at(i).getTracking_Points();
 								//Drawing_Radius_move(obiekt.at(i).position, 2, 2);
-							//cv::addWeighted(mat_card, double((double)alpha / 10), mat_img, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
-							//	cv::addWeighted(mat_img, 1, mat_card, 0.9, 0.1, mat_img);
-								
-							//mat_card = mat_card_temp;
-							//	cv::addWeighted(mat_card, 1, mat_card, 0.9, 0.1, mat_img);
-							}	
+								//cv::addWeighted(mat_card, double((double)alpha / 10), mat_img, (double)beta / (double)10, ((double)gamma / (double)10), mat_card);
+								//	cv::addWeighted(mat_img, 1, mat_card, 0.9, 0.1, mat_img);
+
+								//mat_card = mat_card_temp;
+								//	cv::addWeighted(mat_card, 1, mat_card, 0.9, 0.1, mat_img);
+							}
 							//
-							
+
 						}
-						
-						else 
-						{ 
+
+						else
+						{
 							Is_initialized = false;
-				
-							
-						
+
+
+
 						}
-						
-					
-							//= 
+
+
+						//= 
 					}
-			  
-				cv::imshow(window_card[0], mat_card);
-				if (Is_rectangle_drawn==true) { cv::imshow(window_card[1], mat_card_temp_rectangle); Is_rectangle_drawn = false; };
-			    cv::imshow(window_contour[i],obiekt.at(i).getMat_contour());
-			//	cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
+
+					
+				    if (Is_rectangle_drawn == true) { cv::addWeighted(mat_card, double((double)alpha / 10), mat_card_temp_rectangle, (double)beta / (double)10, ((double)gamma / (double)10), mat_card); Is_rectangle_drawn = false; };
+					cv::imshow(window_contour[i], obiekt.at(i).getMat_contour());
+					cv::imshow(window_card[0], mat_card);
+					//	cv::imshow(window_calback_proj[i], obiekt.at(i).getMat_backproj());
 				}
 			}
 			cv::circle(mat_img, cv::Point(X, Y), 1, cv::Scalar(255, 0, 0), 1, cv::LINE_8, 0);//Kursor
@@ -936,11 +938,11 @@ namespace GUI {
 
 
 
-private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
-	this->myForm_Drawing = gcnew MyForm_Drawing();
-	this->saveAasToolStripMenuItem->Enabled = false;
-	
-}
+	private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
+		this->myForm_Drawing = gcnew MyForm_Drawing();
+		this->saveAasToolStripMenuItem->Enabled = false;
+
+	}
 	private: System::Void Menu_Open(System::Object^  sender, System::EventArgs^  e) {
 		// Displays an OpenFileDialog so the user can select a Cursor.  
 		OpenFileDialog ^ ofd = gcnew OpenFileDialog();
@@ -955,7 +957,7 @@ private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e
 			// Assign the cursor in the Stream to  
 			// the Form's Cursor property.  
 			//String ^onlyFileName = System::IO::Path::GetFileName(ofd->FileName);
-			
+
 			String ^onlyFileName = System::IO::Path::GetFullPath(ofd->FileName);
 			video = msclr::interop::marshal_as< std::string >(onlyFileName);
 			//Is_start_active = true;
@@ -963,36 +965,36 @@ private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e
 			button_start->PerformClick();
 
 
-			
-			
+
+
 
 		}
 	}
 
-private: System::Void Menu_Save_as(System::Object^  sender, System::EventArgs^  e) 
-{
-	// Displays a SaveFileDialog so the user can save the Image  
-	// assigned to Button2.  
-	System::Windows::Forms::SaveFileDialog ^ saveFileDialog1 = gcnew SaveFileDialog();
+	private: System::Void Menu_Save_as(System::Object^  sender, System::EventArgs^  e)
+	{
+		// Displays a SaveFileDialog so the user can save the Image  
+		// assigned to Button2.  
+		System::Windows::Forms::SaveFileDialog ^ saveFileDialog1 = gcnew SaveFileDialog();
 
-	saveFileDialog1->Filter =
-		"Images|*.jpg";
-	saveFileDialog1->Title = "Save an Image File";
-	   System::Drawing::Imaging::ImageFormat ^format = System::Drawing::Imaging::ImageFormat::Png;
-	   format = System::Drawing::Imaging::ImageFormat::Jpeg;
-	//	System:IO::Stream^ myStream;
+		saveFileDialog1->Filter =
+			"Images|*.jpg";
+		saveFileDialog1->Title = "Save an Image File";
+		System::Drawing::Imaging::ImageFormat ^format = System::Drawing::Imaging::ImageFormat::Png;
+		format = System::Drawing::Imaging::ImageFormat::Jpeg;
+		//	System:IO::Stream^ myStream;
 		if (saveFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
-		{	
+		{
 			String ^onlyFileName = System::IO::Path::GetFullPath(saveFileDialog1->FileName);
 			video = msclr::interop::marshal_as< std::string >(onlyFileName);
 			std::cout << "video:" << video;
 			cv::imwrite(video, mat_card);
-		}	
+		}
 
-	
-}
-private: System::Void Menu_Exit(System::Object^  sender, System::EventArgs^  e) {
-	Application::Exit();
-}
-};
+
+	}
+	private: System::Void Menu_Exit(System::Object^  sender, System::EventArgs^  e) {
+		Application::Exit();
+	}
+	};
 }

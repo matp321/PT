@@ -73,6 +73,8 @@ namespace GUI {
 	private: System::Windows::Forms::NumericUpDown^  numeric_Line_Thickness;
 
 	private: System::Windows::Forms::Label^  label1;
+	private: System::Windows::Forms::Label^  label2;
+	public : System::Windows::Forms::Label^  Label_Object_Selected;
 			 /// <summary>
 		/// Required designer variable.
 		/// </summary>
@@ -93,6 +95,8 @@ namespace GUI {
 			this->button_colorpick = (gcnew System::Windows::Forms::Button());
 			this->numeric_Line_Thickness = (gcnew System::Windows::Forms::NumericUpDown());
 			this->label1 = (gcnew System::Windows::Forms::Label());
+			this->label2 = (gcnew System::Windows::Forms::Label());
+			this->Label_Object_Selected = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_Line_Thickness))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -162,11 +166,30 @@ namespace GUI {
 			this->label1->TabIndex = 11;
 			this->label1->Text = L"Line thickness";
 			// 
+			// label2
+			// 
+			this->label2->AutoSize = true;
+			this->label2->Location = System::Drawing::Point(50, 102);
+			this->label2->Name = L"label2";
+			this->label2->Size = System::Drawing::Size(84, 13);
+			this->label2->TabIndex = 12;
+			this->label2->Text = L"Object selected:";
+			// 
+			// Label_Object_Selected
+			// 
+			this->Label_Object_Selected->AutoSize = true;
+			this->Label_Object_Selected->Location = System::Drawing::Point(141, 102);
+			this->Label_Object_Selected->Name = L"Label_Object_Selected";
+			this->Label_Object_Selected->Size = System::Drawing::Size(0, 13);
+			this->Label_Object_Selected->TabIndex = 13;
+			// 
 			// MyForm_Drawing
 			// 
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::None;
 			this->BackColor = System::Drawing::Color::White;
-			this->ClientSize = System::Drawing::Size(253, 128);
+			this->ClientSize = System::Drawing::Size(253, 143);
+			this->Controls->Add(this->Label_Object_Selected);
+			this->Controls->Add(this->label2);
 			this->Controls->Add(this->label1);
 			this->Controls->Add(this->numeric_Line_Thickness);
 			this->Controls->Add(this->button_colorpick);

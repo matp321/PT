@@ -22,7 +22,6 @@ struct Drawing_Position
 		this->r = r;
 	}
 };
-
 class Obiekt
 {
 public:
@@ -55,8 +54,6 @@ public:
 		bool Is_drawing_rectangle_active = false;
 		bool Is_drawing_circle_active = false;
 		bool Is_drawing_line_active = false;
-		int line_thickness = 1;
-
 	}
 	void setMat_backproj(cv::Mat mat_backproj) { this->mat_backproj = mat_backproj; }
 	cv::Mat getMat_backproj() { return this->mat_backproj; }
@@ -115,5 +112,5 @@ private:
 	bool Is_drawing_rectangle_active = false;
 	bool Is_drawing_circle_active = false;
 	bool Is_drawing_line_active = false;
-	int line_thickness;
+	int line_thickness = 1;
 };
